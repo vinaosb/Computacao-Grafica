@@ -9,7 +9,7 @@ static cairo_surface_t *surface = NULL;
 GtkWidget *window;
 GtkWidget *drawing_area;
 
-GtkEntry *x1,*x2,*y1,*y2,*name;
+GtkWidget *x1,*x2,*y1,*y2,*name;
 
 typedef struct {
     int x1,x2,y1,y2;
@@ -64,9 +64,9 @@ static gboolean draw_cb (GtkWidget *widget, cairo_t   *cr,  gpointer   data){
 static void btn_point_clicked_cb(){
   cairo_t *cr;
   cr = cairo_create (surface);
-  std::string tname(gtk_entry_get_text(name));
-  std::string tx1(gtk_entry_get_text(x1));
-  std::string ty1(gtk_entry_get_text(y1));
+  std::string tname(gtk_entry_get_text(GTK_ENTRY(name)));
+  std::string tx1(gtk_entry_get_text(GTK_ENTRY(x1)));
+  std::string ty1(gtk_entry_get_text(GTK_ENTRY(y1)));
   cairo_set_line_width (cr, 4);
   cairo_set_line_cap  (cr, CAIRO_LINE_CAP_ROUND); /* Round dot*/
   cairo_move_to(cr, stoi(tx1), stoi(ty1));
@@ -77,11 +77,11 @@ static void btn_point_clicked_cb(){
 static void btn_line_clicked_cb(){
   cairo_t *cr;
   cr = cairo_create (surface);
-  std::string tname(gtk_entry_get_text(name));
-  std::string tx1(gtk_entry_get_text(x1));
-  std::string tx2(gtk_entry_get_text(x2));
-  std::string ty1(gtk_entry_get_text(y1));
-  std::string ty2(gtk_entry_get_text(y2));
+  std::string tname(gtk_entry_get_text(GTK_ENTRY(name)));
+  std::string tx1(gtk_entry_get_text(GTK_ENTRY(x1)));
+  std::string tx2(gtk_entry_get_text(GTK_ENTRY(x2)));
+  std::string ty1(gtk_entry_get_text(GTK_ENTRY(y1)));
+  std::string ty2(gtk_entry_get_text(GTK_ENTRY(y2)));
   
   object obj;
   obj.x1 =  stoi(tx1);
@@ -101,11 +101,11 @@ static void btn_line_clicked_cb(){
 static void btn_rectangle_clicked_cb(){
    cairo_t *cr;
    cr = cairo_create (surface);
-   std::string tname(gtk_entry_get_text(name));
-   std::string tx1(gtk_entry_get_text(x1));
-   std::string tx2(gtk_entry_get_text(x2));
-   std::string ty1(gtk_entry_get_text(y1));
-   std::string ty2(gtk_entry_get_text(y2));
+   std::string tname(gtk_entry_get_text(GTK_ENTRY(name)));
+   std::string tx1(gtk_entry_get_text(GTK_ENTRY(x1)));
+   std::string tx2(gtk_entry_get_text(GTK_ENTRY(x2)));
+   std::string ty1(gtk_entry_get_text(GTK_ENTRY(y1)));
+   std::string ty2(gtk_entry_get_text(GTK_ENTRY(y2)));
    cairo_move_to(cr, stoi(tx1), stoi(ty1));
    cairo_line_to(cr, stoi(tx1), stoi(ty2));
    cairo_line_to(cr, stoi(tx2), stoi(ty2));
