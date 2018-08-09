@@ -16,10 +16,13 @@ GtkTextMark *mark;
 GtkTextIter iter;
 
 typedef struct {
+    //tipo 0 = ponto, 1 = linha, 2 = retangulo
     int x1,x2,y1,y2;
     std::string name;
-    std::string tipo;
+    int tipo;
 } object;
+
+static int xvp = 400, yvp = 400, xwmin = 0, xwmax = 400, ywmin = 0, ywmax = 400;
 
 std::list<object> listObjects;
 // ######### TO DO #############
@@ -56,6 +59,90 @@ static void clear_surface (void)
   cairo_paint (cr);
   cairo_destroy (cr);
 }
+
+static void draw_point(int x, int y)
+{
+  cairo_t *cr;
+  cr = cairo_create (surface);  
+  cairo_set_line_width (cr, 4);
+  cairo_set_line_cap  (cr, CAIRO_LINE_CAP_ROUND); /* Round dot*/
+  cairo_move_to(cr, x, y);
+  cairo_line_to(cr, x, y);
+  cairo_stroke(cr);
+  gtk_widget_queue_draw (window);
+}
+
+static void draw_line(int x1, int x2, int y1, int y2) 
+{
+   cairo_t *cr;
+   cr = cairo_create (surface);
+   cairo_move_to(cr, x1, y1);
+   cairo_line_to(cr, x2, y2);
+   cairo_stroke(cr);
+   gtk_widget_queue_draw (window);
+}
+
+static void draw_rectangle(int x1, int x2, int y1, int y2) 
+{
+   cairo_t *cr;
+   cr = cairo_create (surface);
+   cairo_move_to(cr, x1, y1);
+   cairo_line_to(cr, x1, y2);
+   cairo_line_to(cr, x2, y2);
+   cairo_line_to(cr, x2, y1);
+   cairo_line_to(cr, x1, y1);
+   cairo_stroke(cr);
+   gtk_widget_queue_draw (window);
+}
+
+static void redraw (void)
+{  	 	    	    	 	
+    clear_surface();
+    
+    for (std::list<object>::iterator it=listObjects.begin(); it != listObjects.end(); ++it) {
+        switch (it->tipo) {
+            case 1 :
+                draw_line(it->x1,it->x2,it->y1,it->y2);
+                break;
+            case 2 :
+                draw_rectangle(it->x1,it->x2,it->y1,it->y2);
+                break;
+            default :
+                draw_point(it->x1,it->y1);
+        }
+    }
+}
+
+static void move (int x, int y)
+{
+    for (std::list<object>::iterator it=listObjects.begin(); it != listObjects.end(); ++it) {
+        it->x1 = it->x1 + x;
+        it->x2 = it->x2 + x;
+        it->y1 = it->y1 + y;
+        it->y2 = it->y2 + y;
+    }
+    redraw();
+}
+
+/*static void zoom (int z)
+{
+    for (std::list<object>::iterator it=listObjects.begin(); it != listObjects.end(); ++it) {
+        it->x1 = it->x1 / zoom;
+        it->x2 = it->x2 / zoom;
+        it->y1 = it->y1 / zoom;
+        it->y2 = it->y2 / zoom;
+    }
+    zoom = zoom + z;
+    for (std::list<object>::iterator it=listObjects.begin(); it != listObjects.end(); ++it) {
+        it->x1 = it->x1 * zoom;
+        it->x2 = it->x2 * zoom;
+        it->y1 = it->y1 * zoom;
+        it->y2 = it->y2 * zoom;
+    }
+    
+    redraw();
+}
+*/
 static gboolean configure_event_cb (GtkWidget *widget, GdkEventConfigure *event, gpointer data){
   if (surface)
     cairo_surface_destroy (surface);
@@ -75,7 +162,18 @@ static gboolean draw_cb (GtkWidget *widget, cairo_t   *cr,  gpointer   data){
 }
 
 static void insert_text_buffer(object obj){
-  std::string text = obj.name + " - " + obj.tipo;
+    std::string tipo;
+    switch(obj.tipo){
+        case 1:
+            tipo = "Linha";
+            break;
+        case 2:
+            tipo = "Retangulo";
+            break;
+        default:
+            tipo = "Ponto";
+    }
+  std::string text = obj.name + " - " + tipo;
   buffer = gtk_text_view_get_buffer (GTK_TEXT_VIEW (textview));
   mark = gtk_text_buffer_get_insert (buffer);
   gtk_text_buffer_get_iter_at_mark (buffer, &iter, mark);
@@ -86,37 +184,25 @@ static void insert_text_buffer(object obj){
 }
 
 static void btn_point_clicked_cb(){
-  cairo_t *cr;
-  cr = cairo_create (surface);
-  
   std::string tname(gtk_entry_get_text(GTK_ENTRY(name)));
   std::string tx1(gtk_entry_get_text(GTK_ENTRY(x1)));
   std::string ty1(gtk_entry_get_text(GTK_ENTRY(y1)));
   
   object obj;
-  obj.x1 =  stoi(tx1);
-  obj.x2 =  stoi(tx1);
-  obj.y1 =  stoi(ty1);
-  obj.y2 =  stoi(ty1);
+  obj.x1 = ((stoi(tx1) - xwmin)*(xvp)/(xwmax-xwmin));
+  obj.x2 = ((stoi(tx1) - xwmin)*(xvp)/(xwmax-xwmin));
+  obj.y1 = (1 - ((stod(ty1) - ywmin)/(ywmax-ywmin)))*(yvp);
+  obj.y2 = (1 - ((stod(ty1) - ywmin)/(ywmax-ywmin)))*(yvp);
+  
   obj.name = tname;
-  obj.tipo = "Ponto";
+  obj.tipo = 0;
   listObjects.push_back(obj);
 
   //insere objeto no TextView
   insert_text_buffer(obj);
-  
-  cairo_set_line_width (cr, 4);
-  cairo_set_line_cap  (cr, CAIRO_LINE_CAP_ROUND); /* Round dot*/
-  
-  cairo_move_to(cr, stoi(tx1), stoi(ty1));
-  cairo_line_to(cr, stoi(tx1), stoi(ty1));
-  cairo_stroke(cr);
-  gtk_widget_queue_draw (window);  
+  redraw();
 }	 	  	 	    	   	      	   	 	    	    	 	
 static void btn_line_clicked_cb(){
-  cairo_t *cr;
-  cr = cairo_create (surface);
-  
   std::string tname(gtk_entry_get_text(GTK_ENTRY(name)));
   std::string tx1(gtk_entry_get_text(GTK_ENTRY(x1)));
   std::string tx2(gtk_entry_get_text(GTK_ENTRY(x2)));
@@ -124,27 +210,23 @@ static void btn_line_clicked_cb(){
   std::string ty2(gtk_entry_get_text(GTK_ENTRY(y2)));
   
   object obj;
-  obj.x1 =  stoi(tx1);
-  obj.x2 =  stoi(tx2);
-  obj.y1 =  stoi(ty1);
-  obj.y2 =  stoi(ty2);
+  obj.x1 = ((stoi(tx1) - xwmin)*(xvp)/(xwmax-xwmin));
+  obj.x2 = ((stoi(tx2) - xwmin)*(xvp)/(xwmax-xwmin));
+  obj.y1 = (1 - ((stod(ty1) - ywmin)/(ywmax-ywmin)))*(yvp);
+  obj.y2 = (1 - ((stod(ty2) - ywmin)/(ywmax-ywmin)))*(yvp);
+  
+  
   obj.name = tname;
-  obj.tipo = "Linha";
+  obj.tipo = 1;
   listObjects.push_back(obj);
   
   //insere objeto no TextView
   insert_text_buffer(obj);
   
-  //desenha
-  cairo_move_to(cr, stoi(tx1), stoi(ty1));
-  cairo_line_to(cr, stoi(tx2), stoi(ty2));
-  cairo_stroke(cr);
-  gtk_widget_queue_draw (window);
-
+  redraw();
+  //draw_line(obj.x1,obj.x2,obj.y1,obj.y2);
  } 
 static void btn_rectangle_clicked_cb(){
-   cairo_t *cr;
-   cr = cairo_create (surface);
    std::string tname(gtk_entry_get_text(GTK_ENTRY(name)));
    std::string tx1(gtk_entry_get_text(GTK_ENTRY(x1)));
    std::string tx2(gtk_entry_get_text(GTK_ENTRY(x2)));
@@ -153,24 +235,20 @@ static void btn_rectangle_clicked_cb(){
    
    
    object obj;
-   obj.x1 =  stoi(tx1);
-   obj.x2 =  stoi(tx2);
-   obj.y1 =  stoi(ty1);
-   obj.y2 =  stoi(ty2);
+   obj.x1 = ((stoi(tx1) - xwmin)*(xvp)/(xwmax-xwmin));
+   obj.x2 = ((stoi(tx2) - xwmin)*(xvp)/(xwmax-xwmin));
+   obj.y1 = (1 - ((stod(ty1) - ywmin)/(ywmax-ywmin)))*(yvp);
+   obj.y2 = (1 - ((stod(ty2) - ywmin)/(ywmax-ywmin)))*(yvp);
+   
    obj.name = tname;
-   obj.tipo = "Retangulo";
+   obj.tipo = 2;
    listObjects.push_back(obj);
   
    //insere objeto no TextView
    insert_text_buffer(obj);
+   
+   redraw();
   
-   cairo_move_to(cr, stoi(tx1), stoi(ty1));
-   cairo_line_to(cr, stoi(tx1), stoi(ty2));
-   cairo_line_to(cr, stoi(tx2), stoi(ty2));
-   cairo_line_to(cr, stoi(tx2), stoi(ty1));
-   cairo_line_to(cr, stoi(tx1), stoi(ty1));
-   cairo_stroke(cr);
-   gtk_widget_queue_draw (window);
   }
  
  static void btn_clear_clicked_cb(){	 	  	 	    	   	      	   	 	    	    	 	
@@ -181,6 +259,8 @@ static void btn_rectangle_clicked_cb(){
     
     clear_surface();
     gtk_widget_queue_draw (window);
+    while(!listObjects.empty())
+        listObjects.pop_front();
         
   }
 
@@ -295,7 +375,7 @@ int main (int argc, char *argv[])
     gtk_grid_attach(GTK_GRID(grid),frame,4,0,100,100);
     drawing_area = gtk_drawing_area_new ();
     /* set a minimum size */
-    gtk_widget_set_size_request (drawing_area, 400, 400);
+    gtk_widget_set_size_request (drawing_area, xvp, yvp);
     gtk_container_add (GTK_CONTAINER (frame), drawing_area);
     
     g_signal_connect (drawing_area, "draw",
