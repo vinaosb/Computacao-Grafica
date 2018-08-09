@@ -5,6 +5,8 @@
 #include <string>
 #include <list>
 
+#define moveSpace 50
+
 static cairo_surface_t *surface = NULL;
 GtkWidget *window;
 GtkWidget *drawing_area;
@@ -142,18 +144,18 @@ static void move (int x, int y)
     redraw();
 }
 static void moveUp(){
-    move(0,-10);
+    move(0,-moveSpace);
 }
 static void moveLeft (){
-    move(10,0);
+    move(moveSpace,0);
 }
 
 static void moveRight (){
-    move(-10,0);
+    move(-moveSpace,0);
 }
 
 static void moveDown (){
-    move(0,10);
+    move(0,moveSpace);
 }
 
 static void zoomWindow (bool z)
