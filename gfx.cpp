@@ -14,6 +14,7 @@ GtkWidget *x1,*x2,*y1,*y2,*name;
 typedef struct {
     int x1,x2,y1,y2;
     std::string name;
+    std::string tipo;
 } object;
 
 std::list<object> listObjects;
@@ -22,17 +23,20 @@ static void print_list(void)
 {
     for (std::list<object>::iterator it=listObjects.begin(); it != listObjects.end(); ++it) {
         if (it->x1 == it->x2 && it->y1 == it->y2) {
-            std::cout << "Nome: " << it->name << "X1 = " << it->x1 << "Y1 = " << it->y1 << std::endl;
+            std::cout << "Nome: " << it->name << " X1 = " << it->x1 << " Y1 = " << it->y1 << std::endl;
         } else {
             std::cout << 
             "Nome: " << it->name << 
-            "X1 = " << it->x1 << 
-            "Y1 = " << it->y1 << 
-            "X2 = " << it->x2 << 
-            "Y2 = " << it->y2 << 
+            " X1 = " << it->x1 << 
+            " Y1 = " << it->y1 << 
+            " X2 = " << it->x2 << 
+            " Y2 = " << it->y2 << 
             std::endl;
+            
         }
     }
+    
+    std::cout << std::endl << std::endl << std::endl;
 }
 
 static void clear_surface (void)
@@ -64,11 +68,23 @@ static gboolean draw_cb (GtkWidget *widget, cairo_t   *cr,  gpointer   data){
 static void btn_point_clicked_cb(){
   cairo_t *cr;
   cr = cairo_create (surface);
+  
   std::string tname(gtk_entry_get_text(GTK_ENTRY(name)));
   std::string tx1(gtk_entry_get_text(GTK_ENTRY(x1)));
   std::string ty1(gtk_entry_get_text(GTK_ENTRY(y1)));
+  
+  object obj;
+  obj.x1 =  stoi(tx1);
+  obj.x2 =  stoi(tx1);
+  obj.y1 =  stoi(ty1);
+  obj.y2 =  stoi(ty1);
+  obj.name = tname;
+  obj.tipo = "Ponto";
+  listObjects.push_back(obj);
+  
   cairo_set_line_width (cr, 4);
   cairo_set_line_cap  (cr, CAIRO_LINE_CAP_ROUND); /* Round dot*/
+  
   cairo_move_to(cr, stoi(tx1), stoi(ty1));
   cairo_line_to(cr, stoi(tx1), stoi(ty1));
   cairo_stroke(cr);
@@ -77,6 +93,7 @@ static void btn_point_clicked_cb(){
 static void btn_line_clicked_cb(){
   cairo_t *cr;
   cr = cairo_create (surface);
+  
   std::string tname(gtk_entry_get_text(GTK_ENTRY(name)));
   std::string tx1(gtk_entry_get_text(GTK_ENTRY(x1)));
   std::string tx2(gtk_entry_get_text(GTK_ENTRY(x2)));
@@ -89,8 +106,8 @@ static void btn_line_clicked_cb(){
   obj.y1 =  stoi(ty1);
   obj.y2 =  stoi(ty2);
   obj.name = tname;
+  obj.tipo = "Linha";
   listObjects.push_back(obj);
-  print_list();
   
   cairo_move_to(cr, stoi(tx1), stoi(ty1));
   cairo_line_to(cr, stoi(tx2), stoi(ty2));
@@ -106,6 +123,17 @@ static void btn_rectangle_clicked_cb(){
    std::string tx2(gtk_entry_get_text(GTK_ENTRY(x2)));
    std::string ty1(gtk_entry_get_text(GTK_ENTRY(y1)));
    std::string ty2(gtk_entry_get_text(GTK_ENTRY(y2)));
+   
+   
+   object obj;
+   obj.x1 =  stoi(tx1);
+   obj.x2 =  stoi(tx2);
+   obj.y1 =  stoi(ty1);
+   obj.y2 =  stoi(ty2);
+   obj.name = tname;
+   obj.tipo = "Retangulo";
+   listObjects.push_back(obj);
+   
    cairo_move_to(cr, stoi(tx1), stoi(ty1));
    cairo_line_to(cr, stoi(tx1), stoi(ty2));
    cairo_line_to(cr, stoi(tx2), stoi(ty2));
