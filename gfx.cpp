@@ -134,34 +134,45 @@ static void redraw (void)
 static void move (int x, int y)
 {
     for (std::list<object>::iterator it=listObjects.begin(); it != listObjects.end(); ++it) {
-        it->x1 = it->x1 - x;
-        it->x2 = it->x2 - x;
+        it->x1 = it->x1 + x;
+        it->x2 = it->x2 + x;
         it->y1 = it->y1 + y;
         it->y2 = it->y2 + y;
     }
     redraw();
 }
 static void moveUp(){
-    move(0,10);
+    move(0,-10);
 }
 static void moveLeft (){
+    move(10,0);
 }
 
 static void moveRight (){
+    move(-10,0);
 }
 
 static void moveDown (){
+    move(0,10);
 }
 
 static void zoomWindow (bool z)
 {
-    if (z) 
+    if (!z) 
         zoom = zoom + 0.1;
     else
         zoom = zoom - 0.1;
     
     
     redraw();
+}
+
+static void zoomIn () {
+    zoomWindow (TRUE);
+}
+
+static void zoomOut() {
+    zoomWindow (FALSE);
 }
 
 static gboolean configure_event_cb (GtkWidget *widget, GdkEventConfigure *event, gpointer data){
@@ -377,10 +388,10 @@ int main (int argc, char *argv[])
     scrolled_win = gtk_scrolled_window_new (NULL, NULL);
     gtk_container_add (GTK_CONTAINER (scrolled_win), textview);
 
-    hbox = gtk_box_new (GTK_HORIENTATION_HORIZONTAL, 5);
+    hbox = gtk_box_new (GTK_ORIENTATION_HORIZONTAL, 5);
     //gtk_box_pack_start_defaults (GTK_BOX (hbox), insert);
 
-    vbox = gtk_box_new (GTK_HORIENTATION_VERTICAL, 5);
+    vbox = gtk_box_new (GTK_ORIENTATION_VERTICAL, 5);
     gtk_box_pack_start (GTK_BOX (vbox), scrolled_win, TRUE, TRUE, 0);
     gtk_box_pack_start (GTK_BOX (vbox), hbox, FALSE, TRUE, 0);
     gtk_grid_attach(GTK_GRID(grid), vbox, 0,11,3,8);
