@@ -141,6 +141,17 @@ static void move (int x, int y)
     }
     redraw();
 }
+static void moveUp(){
+    move(0,10);
+}
+static void moveLeft (){
+}
+
+static void moveRight (){
+}
+
+static void moveDown (){
+}
 
 static void zoomWindow (bool z)
 {
@@ -366,10 +377,10 @@ int main (int argc, char *argv[])
     scrolled_win = gtk_scrolled_window_new (NULL, NULL);
     gtk_container_add (GTK_CONTAINER (scrolled_win), textview);
 
-    hbox = gtk_hbox_new (FALSE, 5);
+    hbox = gtk_box_new (GTK_HORIENTATION_HORIZONTAL, 5);
     //gtk_box_pack_start_defaults (GTK_BOX (hbox), insert);
 
-    vbox = gtk_vbox_new (FALSE, 5);
+    vbox = gtk_box_new (GTK_HORIENTATION_VERTICAL, 5);
     gtk_box_pack_start (GTK_BOX (vbox), scrolled_win, TRUE, TRUE, 0);
     gtk_box_pack_start (GTK_BOX (vbox), hbox, FALSE, TRUE, 0);
     gtk_grid_attach(GTK_GRID(grid), vbox, 0,11,3,8);
@@ -384,6 +395,32 @@ int main (int argc, char *argv[])
     frame = gtk_frame_new(NULL);
     gtk_grid_attach(GTK_GRID(grid),frame,4,0,20,20);
     drawing_area = gtk_drawing_area_new ();
+    
+       //botoes a direita da window
+    button=gtk_button_new_with_label("Move Up");
+    g_signal_connect(button,"clicked",G_CALLBACK(moveUp),window);
+    gtk_grid_attach(GTK_GRID(grid), button, 25,0,2,1);
+        //
+    button=gtk_button_new_with_label("Move Left");
+    g_signal_connect(button,"clicked",G_CALLBACK(moveLeft),window);
+    gtk_grid_attach(GTK_GRID(grid), button, 25,1,1,1);
+        //
+    button=gtk_button_new_with_label("Move Right");
+    g_signal_connect(button,"clicked",G_CALLBACK(moveRight),window);
+    gtk_grid_attach(GTK_GRID(grid), button, 26,1,1,1);
+        //
+    button=gtk_button_new_with_label("Move Down");
+    g_signal_connect(button,"clicked",G_CALLBACK(moveDown),window);
+    gtk_grid_attach(GTK_GRID(grid), button, 25,2,2,1);
+    
+    button=gtk_button_new_with_label("Zoom In");
+    g_signal_connect(button,"clicked",G_CALLBACK(zoomIn),window);
+    gtk_grid_attach(GTK_GRID(grid), button, 25,4,2,1);
+    
+    button=gtk_button_new_with_label("Zoom Out");
+    g_signal_connect(button,"clicked",G_CALLBACK(zoomOut),window);
+    gtk_grid_attach(GTK_GRID(grid), button, 25,5,2,1);
+    
     /* set a minimum size */
     gtk_widget_set_size_request (drawing_area, xvp, yvp);
     gtk_container_add (GTK_CONTAINER (frame), drawing_area);
