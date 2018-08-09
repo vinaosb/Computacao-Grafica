@@ -19,7 +19,7 @@ typedef struct {
     //tipo 0 = ponto, 1 = linha, 2 = retangulo
     int x1,x2,y1,y2;
     std::string name;
-    int tipo;
+    int tipo = 0;
 } object;
 
 static int xvp = 400, yvp = 400, xwmin = 0, xwmax = 400, ywmin = 0, ywmax = 400;
