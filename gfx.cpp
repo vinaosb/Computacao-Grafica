@@ -24,7 +24,7 @@ typedef struct {
     int tipo = 0;
 } object;
 
-static int xvp = 400, yvp = 400, xwmin = 0, xwmax = 400, ywmin = 0, ywmax = 400;
+static int xvp = 400, yvp = 400, xwmin = 0, xwmax = 400, ywmin = 0, ywmax = 400, pointWidth = 4;
 
 static double zoom = 1;
 
@@ -68,7 +68,7 @@ static void draw_point(int x, int y)
 {
   cairo_t *cr;
   cr = cairo_create (surface);  
-  cairo_set_line_width (cr, 4);
+  cairo_set_line_width (cr, pointWidth);
   cairo_set_line_cap  (cr, CAIRO_LINE_CAP_ROUND); /* Round dot*/
   
    double xf = ((x - xwmin)*(xvp)/((xwmax-xwmin)*zoom));
@@ -160,11 +160,14 @@ static void moveDown (){
 
 static void zoomWindow (bool z)
 {
-    if (!z) 
+    if (!z)  {
         zoom = zoom + 0.1;
-    else
+        pointWidth--;
+    }
+    else {
         zoom = zoom - 0.1;
-    
+        pointWidth++;
+    }
     
     redraw();
 }
