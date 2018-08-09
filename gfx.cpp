@@ -29,11 +29,7 @@ static int xvp = 400, yvp = 400, xwmin = 0, xwmax = 400, ywmin = 0, ywmax = 400,
 static double zoom = 1;
 
 std::list<object> listObjects;
-// ######### TO DO #############
-// 1- Limpar a lista quando usar o botão Clear.
-// 2- Mover Viewport
-// 3- Zoom na window.
-// #############################
+
 static void print_list(void)
 {
     for (std::list<object>::iterator it=listObjects.begin(); it != listObjects.end(); ++it) {
@@ -103,8 +99,6 @@ static void draw_rectangle(double x1, double x2, double y1, double y2)
    double xf2 = ((x2 - xwmin)*(xvp)/((xwmax-xwmin)*zoom));
    double yf1 = (1 - ((y1 - ywmin)/((ywmax-ywmin)*zoom)))*(yvp);
    double yf2 = (1 - ((y2 - ywmin)/((ywmax-ywmin)*zoom)))*(yvp);
-   
-   std::cout << xf1 << " " << xf2 << " " << yf1 << " " << yf2 << std::endl;
    
    cairo_move_to(cr, xf1, yf1);
    cairo_line_to(cr, xf1, yf2);
@@ -289,7 +283,7 @@ static void btn_rectangle_clicked_cb(){
   }
  
  static void btn_clear_clicked_cb(){	 	  	 	    	   	      	   	 	    	    	 	
-    print_list();//print para debug
+    //print_list();//print para debug
     // apaga buffer do textView
     buffer = gtk_text_view_get_buffer (GTK_TEXT_VIEW (textview));
     gtk_text_buffer_set_text(buffer,"",-1);
