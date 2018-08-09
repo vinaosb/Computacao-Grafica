@@ -17,12 +17,14 @@ GtkTextIter iter;
 
 typedef struct {
     //tipo 0 = ponto, 1 = linha, 2 = retangulo
-    int x1,x2,y1,y2;
+    double x1,x2,y1,y2;
     std::string name;
     int tipo = 0;
 } object;
 
 static int xvp = 400, yvp = 400, xwmin = 0, xwmax = 400, ywmin = 0, ywmax = 400;
+
+static double zoom = 1;
 
 std::list<object> listObjects;
 // ######### TO DO #############
@@ -66,31 +68,47 @@ static void draw_point(int x, int y)
   cr = cairo_create (surface);  
   cairo_set_line_width (cr, 4);
   cairo_set_line_cap  (cr, CAIRO_LINE_CAP_ROUND); /* Round dot*/
-  cairo_move_to(cr, x, y);
-  cairo_line_to(cr, x, y);
+  
+  double xf = ((x - xwmin)*(xvp)/(xwmax-xwmin));
+  double yf = (1 - ((y - ywmin)/(ywmax-ywmin)))*(yvp);
+  
+  cairo_move_to(cr, xf, yf);
+  cairo_line_to(cr, xf, yf);
   cairo_stroke(cr);
   gtk_widget_queue_draw (window);
 }
 
-static void draw_line(int x1, int x2, int y1, int y2) 
+static void draw_line(double x1, double x2, double y1, double y2) 
 {
    cairo_t *cr;
    cr = cairo_create (surface);
-   cairo_move_to(cr, x1, y1);
-   cairo_line_to(cr, x2, y2);
+   double xf1 = ((x1 - xwmin)*(xvp)/(xwmax-xwmin));
+   double xf2 = ((x2 - xwmin)*(xvp)/(xwmax-xwmin));
+   double yf1 = (1 - ((y1 - ywmin)/(ywmax-ywmin)))*(yvp);
+   double yf2 = (1 - ((y2 - ywmin)/(ywmax-ywmin)))*(yvp);
+   cairo_move_to(cr, xf1, yf1);
+   cairo_line_to(cr, xf2, yf2);
    cairo_stroke(cr);
    gtk_widget_queue_draw (window);
 }
 
-static void draw_rectangle(int x1, int x2, int y1, int y2) 
+static void draw_rectangle(double x1, double x2, double y1, double y2) 
 {
    cairo_t *cr;
    cr = cairo_create (surface);
-   cairo_move_to(cr, x1, y1);
-   cairo_line_to(cr, x1, y2);
-   cairo_line_to(cr, x2, y2);
-   cairo_line_to(cr, x2, y1);
-   cairo_line_to(cr, x1, y1);
+   
+   double xf1 = ((x1 - xwmin)*(xvp)/(xwmax-xwmin));
+   double xf2 = ((x2 - xwmin)*(xvp)/(xwmax-xwmin));
+   double yf1 = (1 - ((y1 - ywmin)/(ywmax-ywmin)))*(yvp);
+   double yf2 = (1 - ((y2 - ywmin)/(ywmax-ywmin)))*(yvp);
+   
+   std::cout << xf1 << " " << xf2 << " " << yf1 << " " << yf2 << std::endl;
+   
+   cairo_move_to(cr, xf1, yf1);
+   cairo_line_to(cr, xf1, yf2);
+   cairo_line_to(cr, xf2, yf2);
+   cairo_line_to(cr, xf2, yf1);
+   cairo_line_to(cr, xf1, yf1);
    cairo_stroke(cr);
    gtk_widget_queue_draw (window);
 }
@@ -124,25 +142,16 @@ static void move (int x, int y)
     redraw();
 }
 
-/*static void zoom (int z)
+static void zoomWindow (bool z)
 {
-    for (std::list<object>::iterator it=listObjects.begin(); it != listObjects.end(); ++it) {
-        it->x1 = it->x1 / zoom;
-        it->x2 = it->x2 / zoom;
-        it->y1 = it->y1 / zoom;
-        it->y2 = it->y2 / zoom;
-    }
-    zoom = zoom + z;
-    for (std::list<object>::iterator it=listObjects.begin(); it != listObjects.end(); ++it) {
-        it->x1 = it->x1 * zoom;
-        it->x2 = it->x2 * zoom;
-        it->y1 = it->y1 * zoom;
-        it->y2 = it->y2 * zoom;
-    }
+    if (z) 
+        zoom = zoom + 0.1;
+    else
+        zoom = zoom - 0.1;
     
     redraw();
 }
-*/
+
 static gboolean configure_event_cb (GtkWidget *widget, GdkEventConfigure *event, gpointer data){
   if (surface)
     cairo_surface_destroy (surface);
@@ -189,10 +198,10 @@ static void btn_point_clicked_cb(){
   std::string ty1(gtk_entry_get_text(GTK_ENTRY(y1)));
   
   object obj;
-  obj.x1 = ((stoi(tx1) - xwmin)*(xvp)/(xwmax-xwmin));
-  obj.x2 = ((stoi(tx1) - xwmin)*(xvp)/(xwmax-xwmin));
-  obj.y1 = (1 - ((stod(ty1) - ywmin)/(ywmax-ywmin)))*(yvp);
-  obj.y2 = (1 - ((stod(ty1) - ywmin)/(ywmax-ywmin)))*(yvp);
+  obj.x1 = stod(tx1);
+  obj.x2 = stod(tx1);
+  obj.y1 = stod(ty1);
+  obj.y2 = stod(ty1);
   
   obj.name = tname;
   obj.tipo = 0;
@@ -210,10 +219,10 @@ static void btn_line_clicked_cb(){
   std::string ty2(gtk_entry_get_text(GTK_ENTRY(y2)));
   
   object obj;
-  obj.x1 = ((stoi(tx1) - xwmin)*(xvp)/(xwmax-xwmin));
-  obj.x2 = ((stoi(tx2) - xwmin)*(xvp)/(xwmax-xwmin));
-  obj.y1 = (1 - ((stod(ty1) - ywmin)/(ywmax-ywmin)))*(yvp);
-  obj.y2 = (1 - ((stod(ty2) - ywmin)/(ywmax-ywmin)))*(yvp);
+  obj.x1 = stod(tx1);
+  obj.x2 = stod(tx2);
+  obj.y1 = stod(ty1);
+  obj.y2 = stod(ty2);
   
   
   obj.name = tname;
@@ -235,10 +244,10 @@ static void btn_rectangle_clicked_cb(){
    
    
    object obj;
-   obj.x1 = ((stoi(tx1) - xwmin)*(xvp)/(xwmax-xwmin));
-   obj.x2 = ((stoi(tx2) - xwmin)*(xvp)/(xwmax-xwmin));
-   obj.y1 = (1 - ((stod(ty1) - ywmin)/(ywmax-ywmin)))*(yvp);
-   obj.y2 = (1 - ((stod(ty2) - ywmin)/(ywmax-ywmin)))*(yvp);
+   obj.x1 = stod(tx1);
+   obj.x2 = stod(tx2);
+   obj.y1 = stod(ty1);
+   obj.y2 = stod(ty2);
    
    obj.name = tname;
    obj.tipo = 2;
