@@ -116,8 +116,8 @@ static void redraw (void)
 static void move (int x, int y)
 {
     for (std::list<object>::iterator it=listObjects.begin(); it != listObjects.end(); ++it) {
-        it->x1 = it->x1 + x;
-        it->x2 = it->x2 + x;
+        it->x1 = it->x1 - x;
+        it->x2 = it->x2 - x;
         it->y1 = it->y1 + y;
         it->y2 = it->y2 + y;
     }
@@ -326,7 +326,7 @@ int main (int argc, char *argv[])
     g_signal_connect(button,"clicked",G_CALLBACK(print_list),window);
     g_signal_connect_swapped(button,"clicked",G_CALLBACK(gtk_widget_destroy),window);
     //gtk_container_add(GTK_CONTAINER(button_box), button);
-    gtk_grid_attach(GTK_GRID(grid), button, 0,100,1,1);
+    gtk_grid_attach(GTK_GRID(grid), button, 0,20,1,1);
     
     name=gtk_entry_new();
     gtk_grid_attach(GTK_GRID(grid), name, 1,4,2,1);
@@ -372,7 +372,7 @@ int main (int argc, char *argv[])
     
     gtk_container_set_border_width (GTK_CONTAINER (window), 8);
     frame = gtk_frame_new(NULL);
-    gtk_grid_attach(GTK_GRID(grid),frame,4,0,100,100);
+    gtk_grid_attach(GTK_GRID(grid),frame,4,0,20,20);
     drawing_area = gtk_drawing_area_new ();
     /* set a minimum size */
     gtk_widget_set_size_request (drawing_area, xvp, yvp);
