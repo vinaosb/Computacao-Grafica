@@ -8,8 +8,12 @@
 static cairo_surface_t *surface = NULL;
 GtkWidget *window;
 GtkWidget *drawing_area;
+GtkWidget *textview;
 
 GtkWidget *x1,*x2,*y1,*y2,*name;
+GtkTextBuffer *buffer;
+GtkTextMark *mark;
+GtkTextIter iter;
 
 typedef struct {
     int x1,x2,y1,y2;
@@ -18,7 +22,11 @@ typedef struct {
 } object;
 
 std::list<object> listObjects;
-
+// ######### TO DO #############
+// 1- Limpar a lista quando usar o botão Clear.
+// 2- Mover Viewport
+// 3- Zoom na window.
+// #############################
 static void print_list(void)
 {
     for (std::list<object>::iterator it=listObjects.begin(); it != listObjects.end(); ++it) {
@@ -26,7 +34,8 @@ static void print_list(void)
             std::cout << "Nome: " << it->name << " X1 = " << it->x1 << " Y1 = " << it->y1 << std::endl;
         } else {
             std::cout << 
-            "Nome: " << it->name << 
+            "Nome: " << it->name <<
+            " Tipo: " << it->tipo <<
             " X1 = " << it->x1 << 
             " Y1 = " << it->y1 << 
             " X2 = " << it->x2 << 
@@ -65,6 +74,17 @@ static gboolean draw_cb (GtkWidget *widget, cairo_t   *cr,  gpointer   data){
   return FALSE;
 }
 
+static void insert_text_buffer(object obj){
+  std::string text = obj.name + " - " + obj.tipo;
+  buffer = gtk_text_view_get_buffer (GTK_TEXT_VIEW (textview));
+  mark = gtk_text_buffer_get_insert (buffer);
+  gtk_text_buffer_get_iter_at_mark (buffer, &iter, mark);
+  if (gtk_text_buffer_get_char_count(buffer))
+    gtk_text_buffer_insert (buffer, &iter, "\n", 1);
+  gtk_text_buffer_insert (buffer, &iter, text.c_str(), -1);
+
+}
+
 static void btn_point_clicked_cb(){
   cairo_t *cr;
   cr = cairo_create (surface);
@@ -81,6 +101,9 @@ static void btn_point_clicked_cb(){
   obj.name = tname;
   obj.tipo = "Ponto";
   listObjects.push_back(obj);
+
+  //insere objeto no TextView
+  insert_text_buffer(obj);
   
   cairo_set_line_width (cr, 4);
   cairo_set_line_cap  (cr, CAIRO_LINE_CAP_ROUND); /* Round dot*/
@@ -109,6 +132,10 @@ static void btn_line_clicked_cb(){
   obj.tipo = "Linha";
   listObjects.push_back(obj);
   
+  //insere objeto no TextView
+  insert_text_buffer(obj);
+  
+  //desenha
   cairo_move_to(cr, stoi(tx1), stoi(ty1));
   cairo_line_to(cr, stoi(tx2), stoi(ty2));
   cairo_stroke(cr);
@@ -133,7 +160,10 @@ static void btn_rectangle_clicked_cb(){
    obj.name = tname;
    obj.tipo = "Retangulo";
    listObjects.push_back(obj);
-   
+  
+   //insere objeto no TextView
+   insert_text_buffer(obj);
+  
    cairo_move_to(cr, stoi(tx1), stoi(ty1));
    cairo_line_to(cr, stoi(tx1), stoi(ty2));
    cairo_line_to(cr, stoi(tx2), stoi(ty2));
@@ -144,16 +174,15 @@ static void btn_rectangle_clicked_cb(){
   }
  
  static void btn_clear_clicked_cb(){	 	  	 	    	   	      	   	 	    	    	 	
-    print_list();
-   // puts(list->val);
+    print_list();//print para debug
+    // apaga buffer do textView
+    buffer = gtk_text_view_get_buffer (GTK_TEXT_VIEW (textview));
+    gtk_text_buffer_set_text(buffer,"",-1);
+    
     clear_surface();
     gtk_widget_queue_draw (window);
         
   }
-
-
-
-
 
 
 int main (int argc, char *argv[])
@@ -162,7 +191,7 @@ int main (int argc, char *argv[])
     GtkWidget *button;
     GtkWidget *grid;
     GtkWidget *frame;
-    GtkWidget *textview,*scrolled_win,*hbox,*vbox;
+    GtkWidget *scrolled_win,*hbox,*vbox;
 
     
 
@@ -214,6 +243,7 @@ int main (int argc, char *argv[])
     //gtk_container_add(GTK_CONTAINER(window), button_box);
     
     button=gtk_button_new_with_label("Close");
+    g_signal_connect(button,"clicked",G_CALLBACK(print_list),window);
     g_signal_connect_swapped(button,"clicked",G_CALLBACK(gtk_widget_destroy),window);
     //gtk_container_add(GTK_CONTAINER(button_box), button);
     gtk_grid_attach(GTK_GRID(grid), button, 0,100,1,1);
@@ -253,6 +283,7 @@ int main (int argc, char *argv[])
     gtk_box_pack_start (GTK_BOX (vbox), scrolled_win, TRUE, TRUE, 0);
     gtk_box_pack_start (GTK_BOX (vbox), hbox, FALSE, TRUE, 0);
     gtk_grid_attach(GTK_GRID(grid), vbox, 0,11,3,8);
+    
     //Fim do trecho TextView
     
     button=gtk_button_new_with_label("Clear");
