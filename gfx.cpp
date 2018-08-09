@@ -69,8 +69,8 @@ static void draw_point(int x, int y)
   cairo_set_line_width (cr, 4);
   cairo_set_line_cap  (cr, CAIRO_LINE_CAP_ROUND); /* Round dot*/
   
-  double xf = ((x - xwmin)*(xvp)/(xwmax-xwmin));
-  double yf = (1 - ((y - ywmin)/(ywmax-ywmin)))*(yvp);
+   double xf = ((x - xwmin)*(xvp)/((xwmax-xwmin)*zoom));
+   double yf = (1 - ((y - ywmin)/((ywmax-ywmin)*zoom)))*(yvp);
   
   cairo_move_to(cr, xf, yf);
   cairo_line_to(cr, xf, yf);
@@ -82,10 +82,10 @@ static void draw_line(double x1, double x2, double y1, double y2)
 {
    cairo_t *cr;
    cr = cairo_create (surface);
-   double xf1 = ((x1 - xwmin)*(xvp)/(xwmax-xwmin));
-   double xf2 = ((x2 - xwmin)*(xvp)/(xwmax-xwmin));
-   double yf1 = (1 - ((y1 - ywmin)/(ywmax-ywmin)))*(yvp);
-   double yf2 = (1 - ((y2 - ywmin)/(ywmax-ywmin)))*(yvp);
+   double xf1 = ((x1 - xwmin)*(xvp)/((xwmax-xwmin)*zoom));
+   double xf2 = ((x2 - xwmin)*(xvp)/((xwmax-xwmin)*zoom));
+   double yf1 = (1 - ((y1 - ywmin)/((ywmax-ywmin)*zoom)))*(yvp);
+   double yf2 = (1 - ((y2 - ywmin)/((ywmax-ywmin)*zoom)))*(yvp);
    cairo_move_to(cr, xf1, yf1);
    cairo_line_to(cr, xf2, yf2);
    cairo_stroke(cr);
@@ -97,10 +97,10 @@ static void draw_rectangle(double x1, double x2, double y1, double y2)
    cairo_t *cr;
    cr = cairo_create (surface);
    
-   double xf1 = ((x1 - xwmin)*(xvp)/(xwmax-xwmin));
-   double xf2 = ((x2 - xwmin)*(xvp)/(xwmax-xwmin));
-   double yf1 = (1 - ((y1 - ywmin)/(ywmax-ywmin)))*(yvp);
-   double yf2 = (1 - ((y2 - ywmin)/(ywmax-ywmin)))*(yvp);
+   double xf1 = ((x1 - xwmin)*(xvp)/((xwmax-xwmin)*zoom));
+   double xf2 = ((x2 - xwmin)*(xvp)/((xwmax-xwmin)*zoom));
+   double yf1 = (1 - ((y1 - ywmin)/((ywmax-ywmin)*zoom)))*(yvp);
+   double yf2 = (1 - ((y2 - ywmin)/((ywmax-ywmin)*zoom)))*(yvp);
    
    std::cout << xf1 << " " << xf2 << " " << yf1 << " " << yf2 << std::endl;
    
@@ -148,6 +148,7 @@ static void zoomWindow (bool z)
         zoom = zoom + 0.1;
     else
         zoom = zoom - 0.1;
+    
     
     redraw();
 }
