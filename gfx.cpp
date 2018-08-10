@@ -360,14 +360,19 @@ int main (int argc, char *argv[])
     gtk_grid_attach(GTK_GRID(grid), button, 0,20,1,1);
     
     name=gtk_entry_new();
+    gtk_entry_set_text(GTK_ENTRY(name),"Objeto1");
     gtk_grid_attach(GTK_GRID(grid), name, 1,4,2,1);
     x1=gtk_entry_new();
+    gtk_entry_set_text(GTK_ENTRY(x1),"0");
     gtk_grid_attach(GTK_GRID(grid), x1, 1,5,2,1);
     y1=gtk_entry_new();
+    gtk_entry_set_text(GTK_ENTRY(y1),"0");
     gtk_grid_attach(GTK_GRID(grid), y1, 1,6,2,1);
     x2=gtk_entry_new();
+    gtk_entry_set_text(GTK_ENTRY(x2),"0");
     gtk_grid_attach(GTK_GRID(grid), x2, 1,7,2,1);
     y2=gtk_entry_new();
+    gtk_entry_set_text(GTK_ENTRY(y2),"0");
     gtk_grid_attach(GTK_GRID(grid), y2, 1,8,2,1);
     
     button=gtk_button_new_with_label("Point");
