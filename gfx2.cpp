@@ -3,16 +3,18 @@
 #include <cstdio>
 #include <iostream>
 #include <string>
-#include <list>
+#include <vector>
+#include <math.h>
 
 #define moveSpace 50
+#define PI 3.14159265
 
 static cairo_surface_t *surface = NULL;
 GtkWidget *window;
 GtkWidget *drawing_area;
 GtkWidget *textview;
 
-GtkWidget *x1,*x2,*y1,*y2,*name;
+GtkWidget *gx1,*gx2,*gy1,*gy2,*name;
 GtkTextBuffer *buffer;
 GtkTextMark *mark;
 GtkTextIter iter;
@@ -28,11 +30,11 @@ static int xvp = 400, yvp = 400, xwmin = 0, xwmax = 400, ywmin = 0, ywmax = 400,
 
 static double zoom = 1;
 
-std::list<object> listObjects;
+std::vector<object> listObjects;
 
 static void print_list(void)
 {
-    for (std::list<object>::iterator it=listObjects.begin(); it != listObjects.end(); ++it) {
+    for (std::vector<object>::iterator it=listObjects.begin(); it != listObjects.end(); ++it) {
         if (it->x1 == it->x2 && it->y1 == it->y2) {
             std::cout << "Nome: " << it->name << " X1 = " << it->x1 << " Y1 = " << it->y1 << std::endl;
         } else {
@@ -49,6 +51,27 @@ static void print_list(void)
     }
     
     std::cout << std::endl << std::endl << std::endl;
+}
+
+void rotation (object *o, double a) {
+    o->x1 = o->x1 * cos ( a * PI / 180.0 ) + o->y1 * sin (a * PI / 180.0);
+    o->y1 = o->y1 * cos ( a * PI / 180.0 ) - o->x1 * sin (a * PI / 180.0);
+    o->x2 = o->x2 * cos ( a * PI / 180.0 ) + o->y2 * sin (a * PI / 180.0);
+    o->y2 = o->y2 * cos ( a * PI / 180.0 ) - o->x2 * sin (a * PI / 180.0);
+}
+
+void translation (object *o, double dx, double dy) {
+    o->x1 = o->x1 + dx;
+    o->x2 = o->x2 + dx;
+    o->y1 = o->y1 + dy;
+    o->y2 = o->y2 + dy;
+}
+
+void scaling (object *o, double e) {
+    o->x1 = o->x1 * e;
+    o->x2 = o->x2 * e;
+    o->y1 = o->y1 * e;
+    o->y2 = o->y2 * e;
 }
 
 static void clear_surface (void)
@@ -113,7 +136,7 @@ static void redraw (void)
 {  	 	    	    	 	
     clear_surface();
     
-    for (std::list<object>::iterator it=listObjects.begin(); it != listObjects.end(); ++it) {
+    for (std::vector<object>::iterator it=listObjects.begin(); it != listObjects.end(); ++it) {
         switch (it->tipo) {
             case 1 :
                 draw_line(it->x1,it->x2,it->y1,it->y2);
@@ -129,7 +152,7 @@ static void redraw (void)
 
 static void move (int x, int y)
 {
-    for (std::list<object>::iterator it=listObjects.begin(); it != listObjects.end(); ++it) {
+    for (std::vector<object>::iterator it=listObjects.begin(); it != listObjects.end(); ++it) {
         it->x1 = it->x1 + x;
         it->x2 = it->x2 + x;
         it->y1 = it->y1 + y;
@@ -216,8 +239,8 @@ static void insert_text_buffer(object obj){
 
 static void btn_point_clicked_cb(){
   std::string tname(gtk_entry_get_text(GTK_ENTRY(name)));
-  std::string tx1(gtk_entry_get_text(GTK_ENTRY(x1)));
-  std::string ty1(gtk_entry_get_text(GTK_ENTRY(y1)));
+  std::string tx1(gtk_entry_get_text(GTK_ENTRY(gx1)));
+  std::string ty1(gtk_entry_get_text(GTK_ENTRY(gy1)));
   
   object obj;
   obj.x1 = stod(tx1);
@@ -235,10 +258,10 @@ static void btn_point_clicked_cb(){
 }	 	  	 	    	   	      	   	 	    	    	 	
 static void btn_line_clicked_cb(){
   std::string tname(gtk_entry_get_text(GTK_ENTRY(name)));
-  std::string tx1(gtk_entry_get_text(GTK_ENTRY(x1)));
-  std::string tx2(gtk_entry_get_text(GTK_ENTRY(x2)));
-  std::string ty1(gtk_entry_get_text(GTK_ENTRY(y1)));
-  std::string ty2(gtk_entry_get_text(GTK_ENTRY(y2)));
+  std::string tx1(gtk_entry_get_text(GTK_ENTRY(gx1)));
+  std::string tx2(gtk_entry_get_text(GTK_ENTRY(gx2)));
+  std::string ty1(gtk_entry_get_text(GTK_ENTRY(gy1)));
+  std::string ty2(gtk_entry_get_text(GTK_ENTRY(gy2)));
   
   object obj;
   obj.x1 = stod(tx1);
@@ -259,10 +282,10 @@ static void btn_line_clicked_cb(){
  } 
 static void btn_rectangle_clicked_cb(){
    std::string tname(gtk_entry_get_text(GTK_ENTRY(name)));
-   std::string tx1(gtk_entry_get_text(GTK_ENTRY(x1)));
-   std::string tx2(gtk_entry_get_text(GTK_ENTRY(x2)));
-   std::string ty1(gtk_entry_get_text(GTK_ENTRY(y1)));
-   std::string ty2(gtk_entry_get_text(GTK_ENTRY(y2)));
+   std::string tx1(gtk_entry_get_text(GTK_ENTRY(gx1)));
+   std::string tx2(gtk_entry_get_text(GTK_ENTRY(gx2)));
+   std::string ty1(gtk_entry_get_text(GTK_ENTRY(gy1)));
+   std::string ty2(gtk_entry_get_text(GTK_ENTRY(gy2)));
    
    
    object obj;
@@ -300,7 +323,7 @@ static void btn_rectangle_clicked_cb(){
     clear_surface();
     gtk_widget_queue_draw (window);
     while(!listObjects.empty())
-        listObjects.pop_front();
+        listObjects.pop_back();
         
   }
 
@@ -371,18 +394,18 @@ int main (int argc, char *argv[])
     name=gtk_entry_new();
     gtk_entry_set_text(GTK_ENTRY(name),"Objeto1");
     gtk_grid_attach(GTK_GRID(grid), name, 1,3,2,1);
-    x1=gtk_entry_new();
-    gtk_entry_set_text(GTK_ENTRY(x1),"0");
-    gtk_grid_attach(GTK_GRID(grid), x1, 1,4,2,1);
-    y1=gtk_entry_new();
-    gtk_entry_set_text(GTK_ENTRY(y1),"0");
-    gtk_grid_attach(GTK_GRID(grid), y1, 1,5,2,1);
-    x2=gtk_entry_new();
-    gtk_entry_set_text(GTK_ENTRY(x2),"0");
-    gtk_grid_attach(GTK_GRID(grid), x2, 1,6,2,1);
-    y2=gtk_entry_new();
-    gtk_entry_set_text(GTK_ENTRY(y2),"0");
-    gtk_grid_attach(GTK_GRID(grid), y2, 1,7,2,1);
+    gx1=gtk_entry_new();
+    gtk_entry_set_text(GTK_ENTRY(gx1),"0");
+    gtk_grid_attach(GTK_GRID(grid), gx1, 1,4,2,1);
+    gy1=gtk_entry_new();
+    gtk_entry_set_text(GTK_ENTRY(gy1),"0");
+    gtk_grid_attach(GTK_GRID(grid), gy1, 1,5,2,1);
+    gx2=gtk_entry_new();
+    gtk_entry_set_text(GTK_ENTRY(gx2),"0");
+    gtk_grid_attach(GTK_GRID(grid), gx2, 1,6,2,1);
+    gy2=gtk_entry_new();
+    gtk_entry_set_text(GTK_ENTRY(gy2),"0");
+    gtk_grid_attach(GTK_GRID(grid), gy2, 1,7,2,1);
     
     button=gtk_button_new_with_label("Point");
     g_signal_connect(button,"clicked",G_CALLBACK(btn_point_clicked_cb),window);
@@ -489,4 +512,4 @@ int main (int argc, char *argv[])
     gtk_main();
 
     return 0;
-}	 	  	 	    	   	      	   	 	    	    	 	
+} 
