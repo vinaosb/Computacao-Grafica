@@ -304,6 +304,7 @@ static void btn_rectangle_clicked_cb(){
    redraw();
   
   }
+  
   static object* getObject(){
     buffer = gtk_text_view_get_buffer (GTK_TEXT_VIEW (textview));
     mark = gtk_text_buffer_get_selection_bound (buffer);
@@ -315,10 +316,14 @@ static void btn_rectangle_clicked_cb(){
       
   }
   static void translateObj(){
-      
+  object *o = getObject();
+  translation(o,10,10);
+  redraw();
   }
   static void scaleObj(){
-      
+  object *o = getObject();
+  scaling(o,1.1);
+  redraw();
   }
  static void rotateByObjCenter(){};
  static void rotateByWorldCenter(){};
