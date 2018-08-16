@@ -304,6 +304,16 @@ static void btn_rectangle_clicked_cb(){
    redraw();
   
   }
+  static object* getObject(){
+    buffer = gtk_text_view_get_buffer (GTK_TEXT_VIEW (textview));
+    mark = gtk_text_buffer_get_selection_bound (buffer);
+    gtk_text_buffer_get_iter_at_mark (buffer, &iter, mark);
+    int linha_cursor = gtk_text_iter_get_line (&iter);
+    object *o = &listObjects.at(linha_cursor);
+    std::cout<<"objeto: " << o->name << ".\n";
+    return o;
+      
+  }
   static void translateObj(){
       
   }
