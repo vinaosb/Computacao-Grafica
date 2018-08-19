@@ -6,7 +6,7 @@
 #include <vector>
 #include <math.h>
 
-#define moveSpace 50
+#define moveSpace 20
 #define PI 3.14159265
 
 static cairo_surface_t *surface = NULL;
@@ -46,18 +46,25 @@ static void print_list(void)
             " X2 = " << it->x2 << 
             " Y2 = " << it->y2 << 
             std::endl;
-            
         }
     }
-    
     std::cout << std::endl << std::endl << std::endl;
 }
 
 void rotation (object *o, double a) {
-    o->x1 = o->x1 * cos ( a * PI / 180.0 ) + o->y1 * sin (a * PI / 180.0);
-    o->y1 = o->y1 * cos ( a * PI / 180.0 ) - o->x1 * sin (a * PI / 180.0);
-    o->x2 = o->x2 * cos ( a * PI / 180.0 ) + o->y2 * sin (a * PI / 180.0);
-    o->y2 = o->y2 * cos ( a * PI / 180.0 ) - o->x2 * sin (a * PI / 180.0);
+    std::cout<<"P1("<< o->x1<<","<<o->y1<<"); P2("<<o->x2<<","<<o->y2<<")\nRotate "<<a<<"º:\n";
+    a = a * PI/180.0;
+    double aux_x1, aux_x2, aux_y1, aux_y2;
+    aux_x1 = o->x1;
+    aux_x2 = o->x2;
+    aux_y1 = o->y1;
+    aux_y2 = o->y2;
+    
+    o->x1 = aux_x1 * cos ( a ) + aux_y1 * sin (a);
+    o->y1 = aux_y1 * cos ( a ) - aux_x1 * sin (a);
+    o->x2 = aux_x2 * cos ( a ) + aux_y2 * sin (a);
+    o->y2 = aux_y2 * cos ( a ) - aux_x2 * sin (a);
+    std::cout<<"P1("<< o->x1<<","<<o->y1<<"); P2("<<o->x2<<","<<o->y2<<")\n";
 }
 
 void translation (object *o, double dx, double dy) {
@@ -66,12 +73,22 @@ void translation (object *o, double dx, double dy) {
     o->y1 = o->y1 + dy;
     o->y2 = o->y2 + dy;
 }
-
+static object* findCenter(object *o){
+    object *oc;
+    oc->x1 = (o->x1+o->x2)/2;
+    oc->y1 = (o->y1+o->y2)/2;
+    return oc;
+}
 void scaling (object *o, double e) {
-    o->x1 = o->x1 * e;
-    o->x2 = o->x2 * e;
-    o->y1 = o->y1 * e;
-    o->y2 = o->y2 * e;
+    if (o->tipo != 0){
+        object *oc = findCenter(o);
+        translation(o, -oc->x1, -oc->y1);
+        o->x1 = o->x1 * e;
+        o->x2 = o->x2 * e;
+        o->y1 = o->y1 * e;
+        o->y2 = o->y2 * e;
+        translation(o, oc->x1, oc->y1);
+    }
 }
 
 static void clear_surface (void)
@@ -161,31 +178,50 @@ static void move (int x, int y)
     redraw();
 }
 static void moveUp(){
-    move(0,-moveSpace);
+    //move(0,-moveSpace);
+    ywmin = ywmin + moveSpace;
+    ywmax = ywmax + moveSpace;
+    redraw();
 }
 static void moveLeft (){
-    move(moveSpace,0);
+    //move(moveSpace,0);
+    xwmin = xwmin - moveSpace;
+    xwmax = xwmax - moveSpace;
+    redraw();
 }
 
 static void moveRight (){
-    move(-moveSpace,0);
+    //move(-moveSpace,0);
+    xwmin = xwmin + moveSpace;
+    xwmax = xwmax + moveSpace;
+    redraw();
 }
 
 static void moveDown (){
-    move(0,moveSpace);
+    //move(0,moveSpace);
+    ywmin = ywmin - moveSpace;
+    ywmax = ywmax - moveSpace;
+    redraw();
 }
 
 static void zoomWindow (bool z)
 {
     if (!z)  {
-        zoom = zoom + 0.1;
-        pointWidth--;
+        //zoom = zoom + 0.1;
+        //pointWidth--;
+        xwmax = xwmax + moveSpace;
+        xwmin = xwmin - moveSpace;
+        ywmax = ywmax + moveSpace;
+        ywmin = ywmin - moveSpace;
     }
     else {
-        zoom = zoom - 0.1;
-        pointWidth++;
+        //zoom = zoom - 0.1;
+        //pointWidth++;
+        xwmax = xwmax - moveSpace;
+        xwmin = xwmin + moveSpace;
+        ywmax = ywmax - moveSpace;
+        ywmin = ywmin + moveSpace;
     }
-    
     redraw();
 }
 
@@ -234,7 +270,6 @@ static void insert_text_buffer(object obj){
   if (gtk_text_buffer_get_char_count(buffer))
     gtk_text_buffer_insert (buffer, &iter, "\n", 1);
   gtk_text_buffer_insert (buffer, &iter, text.c_str(), -1);
-
 }
 
 static void btn_point_clicked_cb(){
@@ -287,7 +322,6 @@ static void btn_rectangle_clicked_cb(){
    std::string ty1(gtk_entry_get_text(GTK_ENTRY(gy1)));
    std::string ty2(gtk_entry_get_text(GTK_ENTRY(gy2)));
    
-   
    object obj;
    obj.x1 = stod(tx1);
    obj.x2 = stod(tx2);
@@ -302,7 +336,6 @@ static void btn_rectangle_clicked_cb(){
    insert_text_buffer(obj);
    
    redraw();
-  
   }
   
   static object* getObject(){
@@ -316,21 +349,39 @@ static void btn_rectangle_clicked_cb(){
       
   }
   static void translateObj(){
-  object *o = getObject();
-  translation(o,10,10);
-  redraw();
+    object *o = getObject();
+    translation(o,10,10);
+    redraw();
   }
   static void scaleObj(){
-  object *o = getObject();
-  scaling(o,1.1);
-  redraw();
+    object *o = getObject();
+    scaling(o,1.1);
+    redraw();
   }
- static void rotateByObjCenter(){};
- static void rotateByWorldCenter(){};
+ static void exec_rotate(object *o){
+    object *oc = findCenter(o);
+    translation(o, -oc->x1, -oc->y1);
+    rotation(o,30);
+    translation(o, oc->x1, oc->y1);
+
+ }
+ static void rotateByObjCenter(){
+    object *o = getObject();
+    // object *oc = findCenter(o);//AQUI GERA ERRO
+    // translation(o, -oc->x1, -oc->y1);
+    // rotation(o,30);
+    // translation(o, oc->x1, oc->y1);
+    exec_rotate(o);
+    redraw();
+ };
+ static void rotateByWorldCenter(){
+    object *o = getObject();
+    rotation(o,30);
+    redraw();
+ };
  static void rotateByAnyPoint(){};
  
  static void btn_clear_clicked_cb(){	 	  	 	    	   	      	   	 	    	    	 	
-    //print_list();//print para debug
     // apaga buffer do textView
     buffer = gtk_text_view_get_buffer (GTK_TEXT_VIEW (textview));
     gtk_text_buffer_set_text(buffer,"",-1);
@@ -339,9 +390,7 @@ static void btn_rectangle_clicked_cb(){
     gtk_widget_queue_draw (window);
     while(!listObjects.empty())
         listObjects.pop_back();
-        
   }
-
 
 int main (int argc, char *argv[])
 {
@@ -350,8 +399,6 @@ int main (int argc, char *argv[])
     GtkWidget *grid;
     GtkWidget *frame;
     GtkWidget *scrolled_win,*hbox,*vbox;
-
-    
 
     gtk_init(&argc, &argv);
 
@@ -367,17 +414,7 @@ int main (int argc, char *argv[])
     /* Set the window's default size */
     gtk_window_set_default_size(GTK_WINDOW(window), 720, 480);
 
-    /*
-    ** Map the destroy signal of the window to gtk_main_quit;
-    ** When the window is about to be destroyed, we get a notification and
-    ** stop the main GTK+ loop by returning 0
-    */
     g_signal_connect(window, "destroy", G_CALLBACK(gtk_main_quit), NULL);
-
-    /*
-    ** Assign the variable "label" to a new GTK label,
-    ** with the text "Hello, world!"
-    */
     grid = gtk_grid_new();
 
     /* Plot the label onto the main window */
@@ -507,7 +544,6 @@ int main (int argc, char *argv[])
                     G_CALLBACK (draw_cb), NULL);
     g_signal_connect (drawing_area,"configure-event",
                     G_CALLBACK (configure_event_cb), NULL);
-      /* Event signals */
 
   /* Ask to receive events the drawing area doesn't normally
    * subscribe to. In particular, we need to ask for the
@@ -517,13 +553,8 @@ int main (int argc, char *argv[])
                                      | GDK_BUTTON_PRESS_MASK
                                      | GDK_POINTER_MOTION_MASK);
    */ /* Make sure that everything, window and label, are visible */
-    
     gtk_widget_show_all(window);
 
-    /*
-    ** Start the main loop, and do nothing (block) until
-    ** the application is closed
-    */
     gtk_main();
 
     return 0;
