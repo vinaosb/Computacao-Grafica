@@ -14,7 +14,7 @@ GtkWidget *window;
 GtkWidget *drawing_area;
 GtkWidget *textview;
 
-GtkWidget *gx1,*gx2,*gy1,*gy2,*name;
+GtkWidget *gx1,*gx2,*gy1,*gy2,*name,*p_entry_x,*p_entry_y;
 GtkTextBuffer *buffer;
 GtkTextMark *mark;
 GtkTextIter iter;
@@ -28,7 +28,7 @@ typedef struct {
 
 static int xvp = 400, yvp = 400, xwmin = 0, xwmax = 400, ywmin = 0, ywmax = 400, pointWidth = 4;
 
-static double zoom = 1;
+static double zoom = 1, anyPoint_x = 0, anyPoint_y = 0;
 
 std::vector<object> listObjects;
 
@@ -77,6 +77,7 @@ static object* findCenter(object *o){
     object *oc;
     oc->x1 = (o->x1+o->x2)/2;
     oc->y1 = (o->y1+o->y2)/2;
+   
     return oc;
 }
 void scaling (object *o, double e) {
@@ -358,20 +359,25 @@ static void btn_rectangle_clicked_cb(){
     scaling(o,1.1);
     redraw();
   }
- static void exec_rotate(object *o){
-    object *oc = findCenter(o);
-    translation(o, -oc->x1, -oc->y1);
-    rotation(o,30);
-    translation(o, oc->x1, oc->y1);
+//   void exec_rotate(object *o){//GERA ERRO NA SEGUNDA ROTACAO
+//     object *oc = findCenter(o);
+//     translation(o, -oc->x1, -oc->y1);
+//     rotation(o,30);
+//     translation(o, oc->x1, oc->y1);
 
- }
+//  }
  static void rotateByObjCenter(){
     object *o = getObject();
     // object *oc = findCenter(o);//AQUI GERA ERRO
     // translation(o, -oc->x1, -oc->y1);
     // rotation(o,30);
     // translation(o, oc->x1, oc->y1);
-    exec_rotate(o);
+    //exec_rotate(o);
+    double xc = (o->x1 + o->x2)/2;
+    double yc = (o->y1 + o->y2)/2;
+    translation(o,-xc,-yc);
+    rotation(o,30);
+    translation(o,xc,yc);
     redraw();
  };
  static void rotateByWorldCenter(){
@@ -379,8 +385,17 @@ static void btn_rectangle_clicked_cb(){
     rotation(o,30);
     redraw();
  };
- static void rotateByAnyPoint(){};
- 
+ static void rotateByAnyPoint(){
+    object *o = getObject();
+    std::string px(gtk_entry_get_text(GTK_ENTRY(p_entry_x)));
+    std::string py(gtk_entry_get_text(GTK_ENTRY(p_entry_y)));
+    anyPoint_x = stod(px);
+    anyPoint_y = stod(py);
+    translation(o,-anyPoint_x,-anyPoint_y);
+    rotation(o,30);
+    translation(o,anyPoint_x,anyPoint_y);
+    redraw();
+};
  static void btn_clear_clicked_cb(){	 	  	 	    	   	      	   	 	    	    	 	
     // apaga buffer do textView
     buffer = gtk_text_view_get_buffer (GTK_TEXT_VIEW (textview));
@@ -391,6 +406,43 @@ static void btn_rectangle_clicked_cb(){
     while(!listObjects.empty())
         listObjects.pop_back();
   }
+void create_new_window(){
+    //gtk_button_released(p_widget);
+    GtkWidget *p_window;
+    GtkWidget *grid;
+    GtkWidget *p_label_x,*p_label_main,*p_label_y,*p_button, *space;
+
+    p_window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
+    gtk_window_set_position(GTK_WINDOW(p_window), GTK_WIN_POS_CENTER);
+    gtk_window_set_title(GTK_WINDOW(p_window), "Rotação sobre um Ponto Qualquer");
+    gtk_window_set_default_size(GTK_WINDOW(p_window), 200, 150);
+
+    grid = gtk_grid_new();
+    gtk_container_add(GTK_CONTAINER(p_window), grid);
+    
+    p_label_main = gtk_label_new("Ponto à rotacionar:");
+    gtk_grid_attach(GTK_GRID(grid), p_label_main,0,0,3,2);
+    p_label_x = gtk_label_new("X = ");
+    gtk_grid_attach(GTK_GRID(grid),p_label_x,1,2,1,2);
+    p_entry_x = gtk_entry_new();
+    gtk_grid_attach(GTK_GRID(grid), p_entry_x,2,2,1,2);
+    p_label_y= gtk_label_new("Y = ");
+    gtk_grid_attach(GTK_GRID(grid), p_label_y,1,4,1,2);
+    p_entry_y = gtk_entry_new();
+    gtk_grid_attach(GTK_GRID(grid), p_entry_y,2,4,1,2);
+    space = gtk_label_new("");
+    gtk_grid_attach(GTK_GRID(grid), space,2,6,1,1);
+    p_button = gtk_button_new_with_label("Rotacionar");
+    gtk_grid_attach(GTK_GRID(grid), p_button,2,7,1,1);
+    
+    gtk_entry_set_text(GTK_ENTRY(p_entry_x),"0");
+    gtk_entry_set_text(GTK_ENTRY(p_entry_y),"0");
+    
+    g_signal_connect(p_button,"clicked",G_CALLBACK(rotateByAnyPoint),p_window);
+    g_signal_connect_swapped(p_button,"clicked",G_CALLBACK(gtk_widget_destroy),p_window);
+
+    gtk_widget_show_all(p_window);
+}
 
 int main (int argc, char *argv[])
 {
@@ -533,7 +585,7 @@ int main (int argc, char *argv[])
     g_signal_connect(button,"clicked",G_CALLBACK(rotateByWorldCenter),window);
     gtk_grid_attach(GTK_GRID(grid), button, 25,8,2,1);
     button=gtk_button_new_with_label("Rotacionar sobre um Ponto");
-    g_signal_connect(button,"clicked",G_CALLBACK(rotateByAnyPoint),window);
+    g_signal_connect(button,"clicked",G_CALLBACK(create_new_window),window);
     gtk_grid_attach(GTK_GRID(grid), button, 25,9,2,1);
     
     /* set a minimum size */
