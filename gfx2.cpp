@@ -14,14 +14,14 @@ GtkWidget *window;
 GtkWidget *drawing_area;
 GtkWidget *textview;
 
-GtkWidget *gx1,*gx2,*gy1,*gy2,*name,*p_entry_x,*p_entry_y;
+GtkWidget *gx1,*gx2,*gx3,*gy1,*gy2,*gy3,*name,*p_entry_x,*p_entry_y;
 GtkTextBuffer *buffer;
 GtkTextMark *mark;
 GtkTextIter iter;
 
 typedef struct {
-    //tipo 0 = ponto, 1 = linha, 2 = retangulo
-    double x1,x2,y1,y2;
+    //tipo 0 = ponto, 1 = linha, 2 = triangulo
+    double x1,x2,x3,y1,y2,y3;
     std::string name;
     int tipo = 0;
 } object;
@@ -54,29 +54,35 @@ static void print_list(void)
 void rotation (object *o, double a) {
     std::cout<<"P1("<< o->x1<<","<<o->y1<<"); P2("<<o->x2<<","<<o->y2<<")\nRotate "<<a<<"º:\n";
     a = a * PI/180.0;
-    double aux_x1, aux_x2, aux_y1, aux_y2;
+    double aux_x1, aux_x2, aux_x3, aux_y1, aux_y2, aux_y3;
     aux_x1 = o->x1;
     aux_x2 = o->x2;
+    aux_x3 = o->x3;
     aux_y1 = o->y1;
     aux_y2 = o->y2;
+    aux_y3 = o->y3;
     
     o->x1 = aux_x1 * cos ( a ) + aux_y1 * sin (a);
     o->y1 = aux_y1 * cos ( a ) - aux_x1 * sin (a);
     o->x2 = aux_x2 * cos ( a ) + aux_y2 * sin (a);
     o->y2 = aux_y2 * cos ( a ) - aux_x2 * sin (a);
+    o->x3 = aux_x3 * cos ( a ) + aux_y3 * sin (a);
+    o->y3 = aux_y3 * cos ( a ) - aux_x3 * sin (a);
     std::cout<<"P1("<< o->x1<<","<<o->y1<<"); P2("<<o->x2<<","<<o->y2<<")\n";
 }
 
 void translation (object *o, double dx, double dy) {
     o->x1 = o->x1 + dx;
     o->x2 = o->x2 + dx;
+    o->x3 = o->x3 + dx;
     o->y1 = o->y1 + dy;
     o->y2 = o->y2 + dy;
+    o->y3 = o->y3 + dy;
 }
 static object* findCenter(object *o){
     object *oc;
-    oc->x1 = (o->x1+o->x2)/2;
-    oc->y1 = (o->y1+o->y2)/2;
+    oc->x1 = (o->x1+o->x2+o->x3)/3;
+    oc->y1 = (o->y1+o->y2+o->x3)/3;
    
     return oc;
 }
@@ -86,8 +92,10 @@ void scaling (object *o, double e) {
         translation(o, -oc->x1, -oc->y1);
         o->x1 = o->x1 * e;
         o->x2 = o->x2 * e;
+        o->x3 = o->x3 * e;
         o->y1 = o->y1 * e;
         o->y2 = o->y2 * e;
+        o->y3 = o->y3 * e;
         translation(o, oc->x1, oc->y1);
     }
 }
@@ -131,21 +139,23 @@ static void draw_line(double x1, double x2, double y1, double y2)
    gtk_widget_queue_draw (window);
 }
 
-static void draw_rectangle(double x1, double x2, double y1, double y2) 
+static void draw_tritangle(double x1, double x2, double x3, double y1, double y2, double y3) 
 {
    cairo_t *cr;
    cr = cairo_create (surface);
-   
+
    double xf1 = ((x1 - xwmin)*(xvp)/((xwmax-xwmin)*zoom));
    double xf2 = ((x2 - xwmin)*(xvp)/((xwmax-xwmin)*zoom));
+   double xf3 = ((x3 - xwmin)*(xvp)/((xwmax-xwmin)*zoom));
    double yf1 = (1 - ((y1 - ywmin)/((ywmax-ywmin)*zoom)))*(yvp);
    double yf2 = (1 - ((y2 - ywmin)/((ywmax-ywmin)*zoom)))*(yvp);
+   double yf3 = (1 - ((y3 - ywmin)/((ywmax-ywmin)*zoom)))*(yvp);
    
    cairo_move_to(cr, xf1, yf1);
-   cairo_line_to(cr, xf1, yf2);
+   cairo_line_to(cr, xf3, yf3);
    cairo_line_to(cr, xf2, yf2);
-   cairo_line_to(cr, xf2, yf1);
    cairo_line_to(cr, xf1, yf1);
+   
    cairo_stroke(cr);
    gtk_widget_queue_draw (window);
 }
@@ -160,7 +170,7 @@ static void redraw (void)
                 draw_line(it->x1,it->x2,it->y1,it->y2);
                 break;
             case 2 :
-                draw_rectangle(it->x1,it->x2,it->y1,it->y2);
+                draw_tritangle(it->x1,it->x2,it->x3,it->y1,it->y2,it->y3);
                 break;
             default :
                 draw_point(it->x1,it->y1);
@@ -173,8 +183,10 @@ static void move (int x, int y)
     for (std::vector<object>::iterator it=listObjects.begin(); it != listObjects.end(); ++it) {
         it->x1 = it->x1 + x;
         it->x2 = it->x2 + x;
+        it->x3 = it->x3 + x;
         it->y1 = it->y1 + y;
         it->y2 = it->y2 + y;
+        it->y3 = it->y3 + y;
     }
     redraw();
 }
@@ -259,7 +271,7 @@ static void insert_text_buffer(object obj){
             tipo = "Linha";
             break;
         case 2:
-            tipo = "Retangulo";
+            tipo = "Triangulo";
             break;
         default:
             tipo = "Ponto";
@@ -281,8 +293,10 @@ static void btn_point_clicked_cb(){
   object obj;
   obj.x1 = stod(tx1);
   obj.x2 = stod(tx1);
+  obj.x3 = stod(tx1);
   obj.y1 = stod(ty1);
   obj.y2 = stod(ty1);
+  obj.y3 = stod(ty1);
   
   obj.name = tname;
   obj.tipo = 0;
@@ -302,8 +316,10 @@ static void btn_line_clicked_cb(){
   object obj;
   obj.x1 = stod(tx1);
   obj.x2 = stod(tx2);
+  obj.x3 = (stod(tx1)+stod(tx2))/2;
   obj.y1 = stod(ty1);
   obj.y2 = stod(ty2);
+  obj.y3 = (stod(ty1)+stod(ty2))/2;
   
   
   obj.name = tname;
@@ -320,14 +336,18 @@ static void btn_rectangle_clicked_cb(){
    std::string tname(gtk_entry_get_text(GTK_ENTRY(name)));
    std::string tx1(gtk_entry_get_text(GTK_ENTRY(gx1)));
    std::string tx2(gtk_entry_get_text(GTK_ENTRY(gx2)));
+   std::string tx3(gtk_entry_get_text(GTK_ENTRY(gx3)));
    std::string ty1(gtk_entry_get_text(GTK_ENTRY(gy1)));
    std::string ty2(gtk_entry_get_text(GTK_ENTRY(gy2)));
+   std::string ty3(gtk_entry_get_text(GTK_ENTRY(gy3)));
    
    object obj;
    obj.x1 = stod(tx1);
    obj.x2 = stod(tx2);
+   obj.x3 = stod(tx3);
    obj.y1 = stod(ty1);
    obj.y2 = stod(ty2);
+   obj.y3 = stod(ty3);
    
    obj.name = tname;
    obj.tipo = 2;
@@ -482,9 +502,13 @@ int main (int argc, char *argv[])
     gtk_grid_attach(GTK_GRID(grid), label, 0,6,1,1);
     label = gtk_label_new("y2 = ");
     gtk_grid_attach(GTK_GRID(grid), label, 0,7,1,1);
+    label = gtk_label_new("x3 = ");
+    gtk_grid_attach(GTK_GRID(grid), label, 0,8,1,1);
+    label = gtk_label_new("y3 = ");
+    gtk_grid_attach(GTK_GRID(grid), label, 0,9,1,1);
 
     label = gtk_label_new("Objects");
-    gtk_grid_attach(GTK_GRID(grid), label, 0,8,1,1);
+    gtk_grid_attach(GTK_GRID(grid), label, 0,10,1,1);
     
     //button_box=gtk_button_box_new(GTK_ORIENTATION_HORIZONTAL);
     //gtk_container_add(GTK_CONTAINER(window), button_box);
@@ -510,6 +534,12 @@ int main (int argc, char *argv[])
     gy2=gtk_entry_new();
     gtk_entry_set_text(GTK_ENTRY(gy2),"0");
     gtk_grid_attach(GTK_GRID(grid), gy2, 1,7,2,1);
+    gx3=gtk_entry_new();
+    gtk_entry_set_text(GTK_ENTRY(gx3),"0");
+    gtk_grid_attach(GTK_GRID(grid), gx3, 1,8,2,1);
+    gy3=gtk_entry_new();
+    gtk_entry_set_text(GTK_ENTRY(gy3),"0");
+    gtk_grid_attach(GTK_GRID(grid), gy3, 1,9,2,1);
     
     button=gtk_button_new_with_label("Point");
     g_signal_connect(button,"clicked",G_CALLBACK(btn_point_clicked_cb),window);
@@ -519,7 +549,7 @@ int main (int argc, char *argv[])
     g_signal_connect(button,"clicked",G_CALLBACK(btn_line_clicked_cb),window);
     gtk_grid_attach(GTK_GRID(grid), button, 1,2,1,1);
 
-    button=gtk_button_new_with_label("Rectangle");
+    button=gtk_button_new_with_label("Triangle");
     g_signal_connect(button,"clicked",G_CALLBACK(btn_rectangle_clicked_cb),window);
     gtk_grid_attach(GTK_GRID(grid), button, 2,2,1,1);
 
@@ -534,7 +564,7 @@ int main (int argc, char *argv[])
     vbox = gtk_box_new (GTK_ORIENTATION_VERTICAL, 5);
     gtk_box_pack_start (GTK_BOX (vbox), scrolled_win, TRUE, TRUE, 0);
     gtk_box_pack_start (GTK_BOX (vbox), hbox, FALSE, TRUE, 0);
-    gtk_grid_attach(GTK_GRID(grid), vbox, 0,9,3,8);
+    gtk_grid_attach(GTK_GRID(grid), vbox, 0,11,3,8);
     
     //Fim do trecho TextView
     
