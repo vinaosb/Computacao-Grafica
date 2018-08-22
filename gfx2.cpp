@@ -393,8 +393,8 @@ static void btn_rectangle_clicked_cb(){
     // rotation(o,30);
     // translation(o, oc->x1, oc->y1);
     //exec_rotate(o);
-    double xc = (o->x1 + o->x2)/2;
-    double yc = (o->y1 + o->y2)/2;
+    double xc = (o->x1 + o->x2 + o->x3)/3;
+    double yc = (o->y1 + o->y2 + o->y3)/3;
     translation(o,-xc,-yc);
     rotation(o,30);
     translation(o,xc,yc);
