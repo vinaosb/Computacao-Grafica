@@ -1,13 +1,16 @@
 #include <gtk/gtk.h>
-#include <cstdlib>
-#include <cstdio>
 #include <iostream>
 #include <string>
 #include <vector>
 #include <math.h>
+#include "polygon.cpp"
+#include "window.cpp"
+#include "viewport.cpp"
 
 #define moveSpace 20
 #define PI 3.14159265
+
+using namespace std;
 
 static cairo_surface_t *surface = NULL;
 GtkWidget *window;
@@ -19,112 +22,17 @@ GtkTextBuffer *buffer;
 GtkTextMark *mark;
 GtkTextIter iter;
 
-typedef struct {
-    //tipo 0 = ponto, 1 = linha, 2 = triangulo
-    double x1,x2,x3,y1,y2,y3;
-    std::string name;
-    int tipo = 0;
-} object;
+Window win;
+Viewport vp;
 
-static double xvp = 400, yvp = 400, xwmin = 0, xwmax = 400, ywmin = 0, ywmax = 400, pointWidth = 4;
-
-static double zoom = 1, anyPoint_x = 0, anyPoint_y = 0;
-
-std::vector<object> listObjects,listPPC;
+vector<Polygon> listPolygons,listPPC;
 
 static void print_list(void)
 {
-    for (std::vector<object>::iterator it=listObjects.begin(); it != listObjects.end(); ++it) {
-        if (it->x1 == it->x2 && it->y1 == it->y2) {
-            std::cout << "Nome: " << it->name << " X1 = " << it->x1 << " Y1 = " << it->y1 << std::endl;
-        } else {
-            std::cout << 
-            "Nome: " << it->name <<
-            " Tipo: " << it->tipo <<
-            " X1 = " << it->x1 << 
-            " Y1 = " << it->y1 << 
-            " X2 = " << it->x2 << 
-            " Y2 = " << it->y2 << 
-            std::endl;
-        }
+    for (vector<Polygon>::iterator it=listPolygons.begin(); it != listPolygons.end(); ++it) {
+        it->print();
     }
-    std::cout << std::endl << std::endl << std::endl;
-}
-
-void rotation (object *o, double a) {
-    std::cout<<"P1("<< o->x1<<","<<o->y1<<"); P2("<<o->x2<<","<<o->y2<<")\nRotate "<<a<<"º:\n";
-    a = a * PI/180.0;
-    double aux_x1, aux_x2, aux_x3, aux_y1, aux_y2, aux_y3;
-    aux_x1 = o->x1;
-    aux_x2 = o->x2;
-    aux_x3 = o->x3;
-    aux_y1 = o->y1;
-    aux_y2 = o->y2;
-    aux_y3 = o->y3;
-    
-    o->x1 = aux_x1 * cos ( a ) + aux_y1 * sin (a);
-    o->y1 = aux_y1 * cos ( a ) - aux_x1 * sin (a);
-    o->x2 = aux_x2 * cos ( a ) + aux_y2 * sin (a);
-    o->y2 = aux_y2 * cos ( a ) - aux_x2 * sin (a);
-    o->x3 = aux_x3 * cos ( a ) + aux_y3 * sin (a);
-    o->y3 = aux_y3 * cos ( a ) - aux_x3 * sin (a);
-    std::cout<<"P1("<< o->x1<<","<<o->y1<<"); P2("<<o->x2<<","<<o->y2<<")\n";
-}
-void rotation (std::vector<object>::iterator o, double a) {
-    std::cout<<"P1("<< o->x1<<","<<o->y1<<"); P2("<<o->x2<<","<<o->y2<<")\nRotate "<<a<<"º:\n";
-    a = a * PI/180.0;
-    double aux_x1, aux_x2, aux_x3, aux_y1, aux_y2, aux_y3;
-    aux_x1 = o->x1;
-    aux_x2 = o->x2;
-    aux_x3 = o->x3;
-    aux_y1 = o->y1;
-    aux_y2 = o->y2;
-    aux_y3 = o->y3;
-    
-    o->x1 = aux_x1 * cos ( a ) + aux_y1 * sin (a);
-    o->y1 = aux_y1 * cos ( a ) - aux_x1 * sin (a);
-    o->x2 = aux_x2 * cos ( a ) + aux_y2 * sin (a);
-    o->y2 = aux_y2 * cos ( a ) - aux_x2 * sin (a);
-    o->x3 = aux_x3 * cos ( a ) + aux_y3 * sin (a);
-    o->y3 = aux_y3 * cos ( a ) - aux_x3 * sin (a);
-    std::cout<<"P1("<< o->x1<<","<<o->y1<<"); P2("<<o->x2<<","<<o->y2<<")\n";
-}
-void translation (object *o, double dx, double dy) {
-    o->x1 = o->x1 + dx;
-    o->x2 = o->x2 + dx;
-    o->x3 = o->x3 + dx;
-    o->y1 = o->y1 + dy;
-    o->y2 = o->y2 + dy;
-    o->y3 = o->y3 + dy;
-}
-
-void translation (std::vector<object>::iterator o, double dx, double dy) {
-    o->x1 = o->x1 + dx;
-    o->x2 = o->x2 + dx;
-    o->x3 = o->x3 + dx;
-    o->y1 = o->y1 + dy;
-    o->y2 = o->y2 + dy;
-    o->y3 = o->y3 + dy;
-}
-static object* findCenter(object *o){
-    object *oc;
-    oc->x1 = (o->x1+o->x2+o->x3)/3;
-    oc->y1 = (o->y1+o->y2+o->x3)/3;
-   
-    return oc;
-}
-void scaling (object *o, double e) {
-    if (o->tipo != 0){
-        object *oc = findCenter(o);
-        translation(o, -oc->x1, -oc->y1);
-        o->x1 = o->x1 * e;
-        o->x2 = o->x2 * e;
-        o->x3 = o->x3 * e;
-        o->y1 = o->y1 * e;
-        o->y2 = o->y2 * e;
-        o->y3 = o->y3 * e;
-        translation(o, oc->x1, oc->y1);
-    }
+    cout << endl << endl << endl;
 }
 
 static void clear_surface (void)
@@ -136,148 +44,110 @@ static void clear_surface (void)
   cairo_destroy (cr);
 }
 
-static void draw_point(int x, int y)
+static void drawPolygon(vector<Polygon>::iterator o)
 {
-  cairo_t *cr;
-  cr = cairo_create (surface);  
-  cairo_set_line_width (cr, pointWidth);
-  cairo_set_line_cap  (cr, CAIRO_LINE_CAP_ROUND); /* Round dot*/
+    cairo_t *cr;
+    cr = cairo_create (surface);  
+    cairo_set_line_width (cr, vp.pointWidth);
+    
+    
+    bool aux = false;
+    float xf = 300,yf = 300;
+    
+    for (vector<Polygon::point>::iterator it = o->getBeginIterator(); it != o->getEndIterator();++it) {
+        xf = ((it->x - win.min.x)*(vp.max.x - vp.min.x)/((win.max.x-win.min.x)));
+        yf = (1 - ((it->y - win.min.y)/((win.max.y-win.min.y))))*(vp.max.y - vp.min.y);
+        
+        if (aux == false) {
+            aux = true;
+            cairo_move_to(cr, xf, yf);
+        }
+        cairo_set_line_cap  (cr, CAIRO_LINE_CAP_ROUND); /* Round dot*/
+        cairo_line_to(cr, xf, yf);
+    }
+    
+    xf = ((o->getPoints().front().x - win.min.x)*(vp.max.x - vp.min.x)/((win.max.x-win.min.x)));
+    yf = (1 - ((o->getPoints().front().y - win.min.y)/((win.max.y-win.min.y))))*(vp.max.y - vp.min.y);
+    cairo_line_to(cr, xf, yf);
+    
+    cout << xf << " " << yf << endl;
   
-   double xf = ((x - xwmin)*(xvp)/((xwmax-xwmin)*zoom));
-   double yf = (1 - ((y - ywmin)/((ywmax-ywmin)*zoom)))*(yvp);
+    cairo_stroke(cr);
+    gtk_widget_queue_draw (window);
+}
+static void drawArea(Polygon o)
+{
+    cairo_t *cr;
+    cr = cairo_create (surface);  
+    //cairo_set_line_width (cr, vp.pointWidth);
+    
+    
+    bool aux = false;
+    float xf = 300,yf = 300;
+    
+    for (vector<Polygon::point>::iterator it = o.getBeginIterator(); it != o.getEndIterator();++it) {
+        xf = ((it->x - win.min.x)*(vp.max.x - vp.min.x)/((win.max.x-win.min.x)));
+        yf = (1 - ((it->y - win.min.y)/((win.max.y-win.min.y))))*(vp.max.y - vp.min.y);
+        
+        if (aux == false) {
+            aux = true;
+            cairo_move_to(cr, xf, yf);
+        }
+        cairo_set_line_cap  (cr, CAIRO_LINE_CAP_ROUND); /* Round dot*/
+        cairo_line_to(cr, xf, yf);
+    }
+    
+    xf = ((o.getPoints().front().x - win.min.x)*(vp.max.x - vp.min.x)/((win.max.x-win.min.x)));
+    yf = (1 - ((o.getPoints().front().y - win.min.y)/((win.max.y-win.min.y))))*(vp.max.y - vp.min.y);
+    cairo_line_to(cr, xf, yf);
+    
+    cout << xf << " " << yf << endl;
   
-  cairo_move_to(cr, xf, yf);
-  cairo_line_to(cr, xf, yf);
-  cairo_stroke(cr);
-  gtk_widget_queue_draw (window);
+    cairo_stroke(cr);
+    gtk_widget_queue_draw (window);
 }
 
-static void draw_line(double x1, double x2, double y1, double y2) 
-{
-   cairo_t *cr;
-   cr = cairo_create (surface);
-   double xf1 = ((x1 - xwmin)*(xvp)/((xwmax-xwmin)*zoom));
-   double xf2 = ((x2 - xwmin)*(xvp)/((xwmax-xwmin)*zoom));
-   double yf1 = (1 - ((y1 - ywmin)/((ywmax-ywmin)*zoom)))*(yvp);
-   double yf2 = (1 - ((y2 - ywmin)/((ywmax-ywmin)*zoom)))*(yvp);
-   cairo_move_to(cr, xf1, yf1);
-   cairo_line_to(cr, xf2, yf2);
-   cairo_stroke(cr);
-   gtk_widget_queue_draw (window);
-}
-
-static void draw_tritangle(double x1, double x2, double x3, double y1, double y2, double y3) 
-{
-   cairo_t *cr;
-   cr = cairo_create (surface);
-
-   double xf1 = ((x1 - xwmin)*(xvp)/((xwmax-xwmin)*zoom));
-   double xf2 = ((x2 - xwmin)*(xvp)/((xwmax-xwmin)*zoom));
-   double xf3 = ((x3 - xwmin)*(xvp)/((xwmax-xwmin)*zoom));
-   double yf1 = (1 - ((y1 - ywmin)/((ywmax-ywmin)*zoom)))*(yvp);
-   double yf2 = (1 - ((y2 - ywmin)/((ywmax-ywmin)*zoom)))*(yvp);
-   double yf3 = (1 - ((y3 - ywmin)/((ywmax-ywmin)*zoom)))*(yvp);
-   
-   cairo_move_to(cr, xf1, yf1);
-   cairo_line_to(cr, xf3, yf3);
-   cairo_line_to(cr, xf2, yf2);
-   cairo_line_to(cr, xf1, yf1);
-   
-   cairo_stroke(cr);
-   gtk_widget_queue_draw (window);
-}
 
 static void redraw (void)
 {  	 	    	    	 	
     clear_surface();
+    /*
+    Polygon obj("Tela");
+    obj.addPoint(20,20);
+    obj.addPoint(360,20);
+    obj.addPoint(360,360);
+    obj.addPoint(20,360);
     
-    for (std::vector<object>::iterator it=listPPC.begin(); it != listPPC.end(); ++it) {
-        switch (it->tipo) {
-            case 1 :
-                draw_line(it->x1,it->x2,it->y1,it->y2);
-                break;
-            case 2 :
-                draw_tritangle(it->x1,it->x2,it->x3,it->y1,it->y2,it->y3);
-                break;
-            default :
-                draw_point(it->x1,it->y1);
-        }
+    drawArea(obj);
+    */
+    for (vector<Polygon>::iterator it = listPPC.begin(); it != listPPC.end(); ++it) {
+        drawPolygon(it);
     }
 }
 
 static void move (int x, int y)
 {
-    for (std::vector<object>::iterator it=listPPC.begin(); it != listPPC.end(); ++it) {
-        it->x1 = it->x1 + x;
-        it->x2 = it->x2 + x;
-        it->x3 = it->x3 + x;
-        it->y1 = it->y1 + y;
-        it->y2 = it->y2 + y;
-        it->y3 = it->y3 + y;
-    }
-    redraw();
-}
-static void moveUp(){
-    //move(0,-moveSpace);
-    ywmin = ywmin + moveSpace;
-    ywmax = ywmax + moveSpace;
-    redraw();
-}
-static void moveLeft (){
-    //move(moveSpace,0);
-    xwmin = xwmin - moveSpace;
-    xwmax = xwmax - moveSpace;
-    redraw();
-}
-
-static void moveRight (){
-    //move(-moveSpace,0);
-    xwmin = xwmin + moveSpace;
-    xwmax = xwmax + moveSpace;
-    redraw();
-}
-
-static void moveDown (){
-    //move(0,moveSpace);
-    ywmin = ywmin - moveSpace;
-    ywmax = ywmax - moveSpace;
-    redraw();
-}
-
-static void zoomWindow (bool z)
-{
-    if (!z)  {
-        //zoom = zoom + 0.1;
-        //pointWidth--;
-        xwmax = xwmax + moveSpace;
-        xwmin = xwmin - moveSpace;
-        ywmax = ywmax + moveSpace;
-        ywmin = ywmin - moveSpace;
-    }
-    else {
-        //zoom = zoom - 0.1;
-        //pointWidth++;
-        xwmax = xwmax - moveSpace;
-        xwmin = xwmin + moveSpace;
-        ywmax = ywmax - moveSpace;
-        ywmin = ywmin + moveSpace;
+    for (vector<Polygon>::iterator it=listPPC.begin(); it != listPPC.end(); ++it) {
+        it->translation(x,y);
     }
     redraw();
 }
 
 static void zoomIn () {
-    zoomWindow (TRUE);
+    win.zoom (TRUE);
+    redraw();
 }
 
 static void zoomOut() {
-    zoomWindow (FALSE);
+    win.zoom (FALSE);
+    redraw();
 }
 
 static void rotVP() {
-    for (std::vector<object>::iterator it=listPPC.begin(); it != listPPC.end(); ++it) {
-        translation(it,-(xwmax-xwmin)/2,-(ywmax-ywmin)/2);
-        rotation(it,15);
-        translation(it,(xwmax-xwmin)/2,(ywmax-ywmin)/2);
+    for (vector<Polygon>::iterator it=listPPC.begin(); it != listPPC.end(); ++it) {
+        it->translation(-(win.max.x-win.min.x)/2,-(win.max.y-win.min.y)/2);
+        it->rotation(15);
+        it->translation((win.max.x-win.min.x)/2,(win.max.y-win.min.y)/2);
     }
     redraw();
 }
@@ -300,19 +170,8 @@ static gboolean draw_cb (GtkWidget *widget, cairo_t   *cr,  gpointer   data){
   return FALSE;
 }
 
-static void insert_text_buffer(object obj){
-    std::string tipo;
-    switch(obj.tipo){
-        case 1:
-            tipo = "Linha";
-            break;
-        case 2:
-            tipo = "Triangulo";
-            break;
-        default:
-            tipo = "Ponto";
-    }
-  std::string text = obj.name + " - " + tipo;
+static void insert_text_buffer(Polygon obj){
+  string text = obj.getName() + " - " + obj.getType();
   buffer = gtk_text_view_get_buffer (GTK_TEXT_VIEW (textview));
   mark = gtk_text_buffer_get_insert (buffer);
   gtk_text_buffer_get_iter_at_mark (buffer, &iter, mark);
@@ -322,148 +181,117 @@ static void insert_text_buffer(object obj){
 }
 
 static void btn_point_clicked_cb(){
-  std::string tname(gtk_entry_get_text(GTK_ENTRY(name)));
-  std::string tx1(gtk_entry_get_text(GTK_ENTRY(gx1)));
-  std::string ty1(gtk_entry_get_text(GTK_ENTRY(gy1)));
+    string tname(gtk_entry_get_text(GTK_ENTRY(name)));
+    string tx1(gtk_entry_get_text(GTK_ENTRY(gx1)));
+    string ty1(gtk_entry_get_text(GTK_ENTRY(gy1)));
   
-  object obj;
-  obj.x1 = stod(tx1);
-  obj.x2 = stod(tx1);
-  obj.x3 = stod(tx1);
-  obj.y1 = stod(ty1);
-  obj.y2 = stod(ty1);
-  obj.y3 = stod(ty1);
+    Polygon obj(tname);
+    obj.addPoint(stof(tx1),stof(ty1));
   
-  obj.name = tname;
-  obj.tipo = 0;
-  listObjects.push_back(obj);
-  listPPC.push_back(obj);
+    listPolygons.push_back(obj);
+    listPPC.push_back(obj);
 
-  //insere objeto no TextView
-  insert_text_buffer(obj);
-  redraw();
+    //insere objeto no TextView
+    insert_text_buffer(obj);
+    redraw();
 }	 	  	 	    	   	      	   	 	    	    	 	
 static void btn_line_clicked_cb(){
-  std::string tname(gtk_entry_get_text(GTK_ENTRY(name)));
-  std::string tx1(gtk_entry_get_text(GTK_ENTRY(gx1)));
-  std::string tx2(gtk_entry_get_text(GTK_ENTRY(gx2)));
-  std::string ty1(gtk_entry_get_text(GTK_ENTRY(gy1)));
-  std::string ty2(gtk_entry_get_text(GTK_ENTRY(gy2)));
+    string tname(gtk_entry_get_text(GTK_ENTRY(name)));
+    string tx1(gtk_entry_get_text(GTK_ENTRY(gx1)));
+    string tx2(gtk_entry_get_text(GTK_ENTRY(gx2)));
+    string ty1(gtk_entry_get_text(GTK_ENTRY(gy1)));
+    string ty2(gtk_entry_get_text(GTK_ENTRY(gy2)));
   
-  object obj;
-  obj.x1 = stod(tx1);
-  obj.x2 = stod(tx2);
-  obj.x3 = (stod(tx1)+stod(tx2))/2;
-  obj.y1 = stod(ty1);
-  obj.y2 = stod(ty2);
-  obj.y3 = (stod(ty1)+stod(ty2))/2;
+    Polygon obj(tname);
+    obj.addPoint(stof(tx1),stof(ty1));
+    obj.addPoint(stof(tx2),stof(ty2));
+    obj.setType("Line"); 
   
+    listPolygons.push_back(obj);
+    listPPC.push_back(obj);
   
-  obj.name = tname;
-  obj.tipo = 1;
-  listObjects.push_back(obj);
-  listPPC.push_back(obj);
+    //insere objeto no TextView
+    insert_text_buffer(obj);
   
-  //insere objeto no TextView
-  insert_text_buffer(obj);
-  
-  redraw();
-  //draw_line(obj.x1,obj.x2,obj.y1,obj.y2);
+    redraw();
+    //draw_line(obj.x1,obj.x2,obj.y1,obj.y2);
  } 
 static void btn_triangle_clicked_cb(){
-   std::string tname(gtk_entry_get_text(GTK_ENTRY(name)));
-   std::string tx1(gtk_entry_get_text(GTK_ENTRY(gx1)));
-   std::string tx2(gtk_entry_get_text(GTK_ENTRY(gx2)));
-   std::string tx3(gtk_entry_get_text(GTK_ENTRY(gx3)));
-   std::string ty1(gtk_entry_get_text(GTK_ENTRY(gy1)));
-   std::string ty2(gtk_entry_get_text(GTK_ENTRY(gy2)));
-   std::string ty3(gtk_entry_get_text(GTK_ENTRY(gy3)));
+    string tname(gtk_entry_get_text(GTK_ENTRY(name)));
+    string tx1(gtk_entry_get_text(GTK_ENTRY(gx1)));
+    string tx2(gtk_entry_get_text(GTK_ENTRY(gx2)));
+    string tx3(gtk_entry_get_text(GTK_ENTRY(gx3)));
+    string ty1(gtk_entry_get_text(GTK_ENTRY(gy1)));
+    string ty2(gtk_entry_get_text(GTK_ENTRY(gy2)));
+    string ty3(gtk_entry_get_text(GTK_ENTRY(gy3)));
    
-   object obj;
-   obj.x1 = stod(tx1);
-   obj.x2 = stod(tx2);
-   obj.x3 = stod(tx3);
-   obj.y1 = stod(ty1);
-   obj.y2 = stod(ty2);
-   obj.y3 = stod(ty3);
+    Polygon obj(tname);
+    obj.addPoint(stof(tx1),stof(ty1));
+    obj.addPoint(stof(tx2),stof(ty2));
+    obj.addPoint(stof(tx3),stof(ty3));
+    obj.setType("Triangle"); 
    
-   obj.name = tname;
-   obj.tipo = 2;
-   listObjects.push_back(obj);
-   listPPC.push_back(obj);
+    listPolygons.push_back(obj);
+    listPPC.push_back(obj);
   
-   //insere objeto no TextView
-   insert_text_buffer(obj);
+    //insere objeto no TextView
+    insert_text_buffer(obj);
    
-   redraw();
+    redraw();
   }
   
-  static object* getObject(){
+static Polygon* getPolygon(){
     buffer = gtk_text_view_get_buffer (GTK_TEXT_VIEW (textview));
     mark = gtk_text_buffer_get_selection_bound (buffer);
     gtk_text_buffer_get_iter_at_mark (buffer, &iter, mark);
     int linha_cursor = gtk_text_iter_get_line (&iter);
-    object *o = &listObjects.at(linha_cursor);
-    std::cout<<"objeto: " << o->name << ".\n";
+    Polygon *o = &listPPC.at(linha_cursor);
     return o;
-      
-  }
-  static void translateObj(){
-    object *o = getObject();
-    translation(o,10,10);
+}
+static void translateObj(){
+    Polygon *o = getPolygon();
+    o->translation(10,10);
     redraw();
-  }
-  static void scaleObj(){
-    object *o = getObject();
-    scaling(o,1.1);
+}
+static void scaleObj(){
+    Polygon *o = getPolygon();
+    o->scaling(1.1);
     redraw();
-  }
-//   void exec_rotate(object *o){//GERA ERRO NA SEGUNDA ROTACAO
-//     object *oc = findCenter(o);
-//     translation(o, -oc->x1, -oc->y1);
-//     rotation(o,30);
-//     translation(o, oc->x1, oc->y1);
-
-//  }
- static void rotateByObjCenter(){
-    object *o = getObject();
-    // object *oc = findCenter(o);//AQUI GERA ERRO
-    // translation(o, -oc->x1, -oc->y1);
-    // rotation(o,30);
-    // translation(o, oc->x1, oc->y1);
-    //exec_rotate(o);
-    double xc = (o->x1 + o->x2 + o->x3)/3;
-    double yc = (o->y1 + o->y2 + o->y3)/3;
-    translation(o,-xc,-yc);
-    rotation(o,30);
-    translation(o,xc,yc);
+}
+static void rotateByObjCenter(){
+    Polygon *o = getPolygon();
+    Polygon::point center = o->findCenter();
+    o->translation(-center.x,-center.y);
+    o->rotation(30);
+    o->translation(center.x,center.y);
     redraw();
  };
- static void rotateByWorldCenter(){
-    object *o = getObject();
-    rotation(o,30);
+static void rotateByWorldCenter(){
+    Polygon *o = getPolygon();
+    o->rotation(30);
     redraw();
  };
- static void rotateByAnyPoint(){
-    object *o = getObject();
-    std::string px(gtk_entry_get_text(GTK_ENTRY(p_entry_x)));
-    std::string py(gtk_entry_get_text(GTK_ENTRY(p_entry_y)));
-    anyPoint_x = stod(px);
-    anyPoint_y = stod(py);
-    translation(o,-anyPoint_x,-anyPoint_y);
-    rotation(o,30);
-    translation(o,anyPoint_x,anyPoint_y);
+static void rotateByAnyPoint(){
+    Polygon *o = getPolygon();
+    string px(gtk_entry_get_text(GTK_ENTRY(p_entry_x)));
+    string py(gtk_entry_get_text(GTK_ENTRY(p_entry_y)));
+    Polygon::point p;
+    p.x = stof(px);
+    p.y = stof(py);
+    o->translation(-p.x,-p.y);
+    o->rotation(30);
+    o->translation(p.x,p.y);
     redraw();
 };
- static void btn_clear_clicked_cb(){	 	  	 	    	   	      	   	 	    	    	 	
+static void btn_clear_clicked_cb(){	 	  	 	    	   	      	   	 	    	    	 	
     // apaga buffer do textView
     buffer = gtk_text_view_get_buffer (GTK_TEXT_VIEW (textview));
     gtk_text_buffer_set_text(buffer,"",-1);
     
     clear_surface();
     gtk_widget_queue_draw (window);
-    while(!listObjects.empty())
-        listObjects.pop_back();
+    while(!listPolygons.empty())
+        listPolygons.pop_back();
   }
 void create_new_window(){
     //gtk_button_released(p_widget);
@@ -502,6 +330,26 @@ void create_new_window(){
 
     gtk_widget_show_all(p_window);
 }
+
+
+    void moveUp(){
+        win.moveUp();
+        redraw();
+    }
+    void moveLeft (){
+        win.moveLeft();
+        redraw();
+    }
+    
+    void moveRight (){
+        win.moveRight();
+        redraw();
+    }
+    
+    void moveDown (){
+        win.moveDown();
+        redraw();
+    }
 
 int main (int argc, char *argv[])
 {
@@ -546,7 +394,7 @@ int main (int argc, char *argv[])
     label = gtk_label_new("y3 = ");
     gtk_grid_attach(GTK_GRID(grid), label, 0,9,1,1);
 
-    label = gtk_label_new("Objects");
+    label = gtk_label_new("Polygons");
     gtk_grid_attach(GTK_GRID(grid), label, 0,10,1,1);
     
     //button_box=gtk_button_box_new(GTK_ORIENTATION_HORIZONTAL);
@@ -662,7 +510,7 @@ int main (int argc, char *argv[])
     gtk_grid_attach(GTK_GRID(grid), button, 25,9,2,1);
     
     /* set a minimum size */
-    gtk_widget_set_size_request (drawing_area, xvp, yvp);
+    gtk_widget_set_size_request (drawing_area, vp.max.x-vp.min.x, vp.max.y-vp.min.y);
     gtk_container_add (GTK_CONTAINER (frame), drawing_area);
     
     g_signal_connect (drawing_area, "draw",
