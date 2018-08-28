@@ -6,9 +6,11 @@
 #include "polygon.cpp"
 #include "window.cpp"
 #include "viewport.cpp"
+#include "descritorOBJ.cpp"
 
 #define moveSpace 20
 #define PI 3.14159265
+#define FILE "poly.obj"
 
 using namespace std;
 
@@ -79,7 +81,7 @@ static void drawArea(Polygon o)
 {
     cairo_t *cr;
     cr = cairo_create (surface);  
-    //cairo_set_line_width (cr, vp.pointWidth);
+    cairo_set_line_width (cr, vp.pointWidth);
     
     
     bool aux = false;
@@ -143,10 +145,19 @@ static void zoomOut() {
     redraw();
 }
 
-static void rotVP() {
+static void rotVP1() {
     for (vector<Polygon>::iterator it=listPPC.begin(); it != listPPC.end(); ++it) {
         it->translation(-(win.max.x-win.min.x)/2,-(win.max.y-win.min.y)/2);
-        it->rotation(15);
+        it->rotation(10);
+        it->translation((win.max.x-win.min.x)/2,(win.max.y-win.min.y)/2);
+    }
+    redraw();
+}
+
+static void rotVP2() {
+    for (vector<Polygon>::iterator it=listPPC.begin(); it != listPPC.end(); ++it) {
+        it->translation(-(win.max.x-win.min.x)/2,-(win.max.y-win.min.y)/2);
+        it->rotation(-10);
         it->translation((win.max.x-win.min.x)/2,(win.max.y-win.min.y)/2);
     }
     redraw();
@@ -350,6 +361,23 @@ void create_new_window(){
         win.moveDown();
         redraw();
     }
+    
+    void load() {
+        DescritorOBJ obj(FILE);
+        
+        vector<Polygon> aux = obj.loader();
+    }
+    
+    void save() {
+        DescritorOBJ obj(FILE);
+        
+        obj.clearData();
+        
+        for (vector<Polygon>::iterator it = listPolygons.begin(); it != listPolygons.end(); ++it) {
+            obj.saver(*it);
+            cout << it->getName();
+        }
+    }
 
 int main (int argc, char *argv[])
 {
@@ -481,9 +509,13 @@ int main (int argc, char *argv[])
     g_signal_connect(button,"clicked",G_CALLBACK(moveDown),window);
     gtk_grid_attach(GTK_GRID(grid), button, 25,2,2,1);
         //
-    button=gtk_button_new_with_label("Rotate VP");
-    g_signal_connect(button,"clicked",G_CALLBACK(rotVP),window);
-    gtk_grid_attach(GTK_GRID(grid), button, 25,3,2,1);
+    button=gtk_button_new_with_label("Rotate VP <<");
+    g_signal_connect(button,"clicked",G_CALLBACK(rotVP1),window);
+    gtk_grid_attach(GTK_GRID(grid), button, 25,3,1,1);
+        //
+    button=gtk_button_new_with_label("Rotate VP >>");
+    g_signal_connect(button,"clicked",G_CALLBACK(rotVP2),window);
+    gtk_grid_attach(GTK_GRID(grid), button, 26,3,1,1);
     
     button=gtk_button_new_with_label("Zoom In");
     g_signal_connect(button,"clicked",G_CALLBACK(zoomIn),window);
@@ -508,6 +540,14 @@ int main (int argc, char *argv[])
     button=gtk_button_new_with_label("Rotacionar sobre um Ponto");
     g_signal_connect(button,"clicked",G_CALLBACK(create_new_window),window);
     gtk_grid_attach(GTK_GRID(grid), button, 25,9,2,1);
+    
+    
+    button=gtk_button_new_with_label("Load Obj");
+    g_signal_connect(button,"clicked",G_CALLBACK(load),window);
+    gtk_grid_attach(GTK_GRID(grid), button, 25,12,1,1);
+    button=gtk_button_new_with_label("Save Polygons");
+    g_signal_connect(button,"clicked",G_CALLBACK(save),window);
+    gtk_grid_attach(GTK_GRID(grid), button, 26,12,1,1);
     
     /* set a minimum size */
     gtk_widget_set_size_request (drawing_area, vp.max.x-vp.min.x, vp.max.y-vp.min.y);
