@@ -13,9 +13,16 @@ class Polygon {
     public:
     
     typedef struct {
-        float x;
-        float y;
+        float x = 0;
+        float y = 0;
+        float z = 0;
     } point;
+    
+    
+    Polygon () {
+        type = "Point";
+        points.clear();
+    }
     
     
     Polygon (string n) {
@@ -101,16 +108,25 @@ class Polygon {
         return points.end();
     }
     
-    void addPoint(float x, float y) {
+    void addPoint(float x, float y, float z = 0) {
         point aux;
         aux.x = x;
         aux.y = y;
+        aux.z = z;
         
         points.push_back(aux);
     }
     
+    void clear() {
+        points.clear();
+    }
+    
     string getName() {
         return name;
+    }
+    
+    void setName (string s) {
+        name = s;
     }
     
     void setType (string s) {
