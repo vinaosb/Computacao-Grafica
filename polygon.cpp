@@ -117,6 +117,10 @@ class Polygon {
         points.push_back(aux);
     }
     
+    void addPoints (vector<point> vp) {
+        points.insert(points.end(),vp.begin(),vp.end());
+    }
+    
     void clear() {
         points.clear();
     }
@@ -134,6 +138,10 @@ class Polygon {
     }
     string getType () {
         return type;
+    }
+    
+    void erase(vector<point>::iterator it) {
+        points.erase(it);
     }
     
     void print() {
