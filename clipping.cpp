@@ -19,8 +19,9 @@ class Clipping {
         for (vector<Polygon>::iterator it = ppc.begin(); it != ppc.end(); ++it) {
             if (it->getType() == "Point") {
                 Polygon temp = pointClip(*it);
-                cout << temp.getPoints().size() << endl;
-                ret.push_back(temp);
+                cout << "temp_size:" << temp.getPoints().size() << endl;
+                if (temp.getPoints().size() > 0)
+                    ret.push_back(temp);
             } else if (it->getType() == "Line") {
                 Polygon temp = lineClip(*it); 
                 ret.push_back(temp);
@@ -29,7 +30,7 @@ class Clipping {
                 ret.push_back(temp);
             }
         }
-        cout << ret[0].getPoints().size() << endl;
+        //cout << "size:" << ret[0].getPoints().size() << endl;
         return ret;
     }
     
