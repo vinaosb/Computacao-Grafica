@@ -96,7 +96,7 @@ static void drawArea(Polygon o)
             aux = true;
             cairo_move_to(cr, xf, yf);
         }
-        cairo_set_line_cap  (cr, CAIRO_LINE_CAP_ROUND); /* Round dot*/
+        cairo_set_line_cap  (cr, CAIRO_LINE_CAP_ROUND);
         cairo_line_to(cr, xf, yf);
     }
     
@@ -104,7 +104,8 @@ static void drawArea(Polygon o)
     yf = (1 - ((o.getPoints().front().y - win.min.y)/((win.max.y-win.min.y))))*(vp.max.y - vp.min.y);
     cairo_line_to(cr, xf, yf);
 
-  
+    
+    cairo_set_source_rgb (cr, 1, 0, 0);
     cairo_stroke(cr);
     gtk_widget_queue_draw (window);
 }
@@ -126,7 +127,7 @@ static void redraw (void)
     listClip.clear();
     vector<Polygon> temp = c.clip(listPPC);
     listClip.insert(listClip.end(), temp.begin(), temp.end());
-    
+    cout << "listclip size: "<<listClip.size()<<endl;
     
     if (listClip.size() > 0)
         for (vector<Polygon>::iterator it = listClip.begin(); it != listClip.end(); ++it) {
@@ -146,11 +147,13 @@ static void move (int x, int y)
 
 static void zoomIn () {
     win.zoom (TRUE);
+    //vp.zoom (TRUE);
     redraw();
 }
 
 static void zoomOut() {
     win.zoom (FALSE);
+    //vp.zoom (FALSE);
     redraw();
 }
 
@@ -303,12 +306,14 @@ static void rotateByAnyPoint(){
     o->translation(p.x,p.y);
     redraw();
 };
-static void btn_clear_clicked_cb(){	 	  	 	    	   	      	   	 	    	    	 	
+static void btn_clear_clicked_cb(){	 	 
+    listPPC.clear();
     // apaga buffer do textView
     buffer = gtk_text_view_get_buffer (GTK_TEXT_VIEW (textview));
     gtk_text_buffer_set_text(buffer,"",-1);
     
     clear_surface();
+    //vp.reset();
     gtk_widget_queue_draw (window);
     while(!listPolygons.empty())
         listPolygons.pop_back();
@@ -354,20 +359,24 @@ void create_new_window(){
 
     void moveUp(){
         win.moveUp();
+        vp.moveUp();
         redraw();
     }
     void moveLeft (){
         win.moveLeft();
+        vp.moveLeft();
         redraw();
     }
     
     void moveRight (){
         win.moveRight();
+        vp.moveRight();
         redraw();
     }
     
     void moveDown (){
         win.moveDown();
+        vp.moveDown();
         redraw();
     }
     
