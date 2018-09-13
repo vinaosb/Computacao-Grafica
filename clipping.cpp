@@ -157,12 +157,18 @@ class Clipping {
         Polygon ret, lineTemp;
         ret.clear(), lineTemp.clear();
         
-        for (vector<Polygon::point>::iterator it = p.getBeginIterator(); it != p.getEndIterator()-1; ++it) {
-            lineTemp.addPoint(it->x, it->y);
-            lineTemp.addPoint((it+1)->x,(it+1)->y);
-            lineClip(lineTemp);
-            
+        for (vector<Polygon::point>::iterator it = p.getBeginIterator(); it != p.getEndIterator(); ++it) {
+            if(it != p.getEndIterator()) {
+                lineTemp.addPoint(it->x, it->y);
+                lineTemp.addPoint((it+1)->x,(it+1)->y);
+            } else  {
+                lineTemp.addPoint(p.getBeginIterator()->x, p.getBeginIterator()->y);
+                lineTemp.addPoint(it->x,it->y);
+            }
+            lineTemp = lineClip(lineTemp);
             ret.addPoints(lineTemp.getPoints());
+            
+            lineTemp.clear();
         }
         
         for (vector<Polygon::point>::iterator it = ret.getBeginIterator(); it != ret.getEndIterator()-1; ++it) {
