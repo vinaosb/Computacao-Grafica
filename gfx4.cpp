@@ -8,12 +8,19 @@
 #include "window.cpp"
 #include "viewport.cpp"
 #include "descritorOBJ.cpp"
+#include "Curva2D.cpp"
+#include <iterator>
 
 #define moveSpace 20
 #define PI 3.14159265
 #define FILE "poly.obj"
 
 using namespace std;
+//
+//######## TO DO ########
+//1-Corrigir ZoomIn e ZoomOut
+//2-B-Spline deve aceitar qualquer quantidade de pontos.
+//##########
 
 static cairo_surface_t *surface = NULL;
 GtkWidget *window;
@@ -21,6 +28,7 @@ GtkWidget *drawing_area;
 GtkWidget *textview;
 
 GtkWidget *gx1,*gx2,*gx3,*gy1,*gy2,*gy3,*name,*p_entry_x,*p_entry_y;
+GtkWidget *p_entry_1,*p_entry_2,*p_entry_3,*p_entry_4,*p_entry_t,*radioBezier, *radioSpline;
 GtkTextBuffer *buffer;
 GtkTextMark *mark;
 GtkTextIter iter;
@@ -64,15 +72,20 @@ static void drawPolygon(vector<Polygon>::iterator o)
         if (aux == false) {
             aux = true;
             cairo_move_to(cr, xf, yf);
+            cout <<"draw poly "<<xf<<","<<yf<<endl;
         }
         cairo_set_line_cap  (cr, CAIRO_LINE_CAP_ROUND); /* Round dot*/
         cairo_line_to(cr, xf, yf);
+        cout <<"draw poly final "<<xf<<","<<yf<<endl;
     }
     
     xf = ((o->getPoints().front().x - win.min.x)*(vp.max.x - vp.min.x)/((win.max.x-win.min.x)));
     yf = (1 - ((o->getPoints().front().y - win.min.y)/((win.max.y-win.min.y))))*(vp.max.y - vp.min.y);
-    cairo_line_to(cr, xf, yf);
-    
+    if(o->getType() != "Curve"){
+        cairo_line_to(cr, xf, yf);
+        cout <<"draw poly after "<<xf<<","<<yf<<endl;
+    }
+    cout << "getTypeC:"<<o->getType() <<endl;
     cout << xf << " " << yf << endl;
   
     cairo_stroke(cr);
@@ -133,6 +146,7 @@ static void redraw (void)
         for (vector<Polygon>::iterator it = listClip.begin(); it != listClip.end(); ++it) {
             cout << it->getPoints().at(0).x << endl;
             cout << "ok" << endl;
+            cout << "getTypeIT:"<<it->getType() <<endl;
             drawPolygon(it);
         }
 }
@@ -262,6 +276,60 @@ static void btn_triangle_clicked_cb(){
    
     redraw();
   }
+static vector<int> splitCoord(string entry_ponto){
+    vector<int> ponto;
+    string x,y;
+    size_t pos = 0;
+    string token;
+    pos = entry_ponto.find(",");
+    x = entry_ponto.substr(0, pos);
+    entry_ponto.erase(0, pos + 1);
+    y = entry_ponto;
+    ponto.push_back(atoi(x.c_str()));
+    ponto[1] = atoi(y.c_str());
+ 
+    return ponto;
+}
+static void btn_draw_curva2D(){
+    string tname="Curva2D";
+    Polygon obj(tname);
+    string tp1(gtk_entry_get_text(GTK_ENTRY(p_entry_1)));
+    string tp2(gtk_entry_get_text(GTK_ENTRY(p_entry_2)));
+    string tp3(gtk_entry_get_text(GTK_ENTRY(p_entry_3)));
+    string tp4(gtk_entry_get_text(GTK_ENTRY(p_entry_4)));
+    string t(gtk_entry_get_text(GTK_ENTRY(p_entry_t)));
+    vector<int> p;
+    p = splitCoord(tp1);
+    obj.addPoint(p[0],p[1]);
+    p = splitCoord(tp2);
+    obj.addPoint(p[0],p[1]);
+    p = splitCoord(tp3);
+    obj.addPoint(p[0],p[1]);
+    p = splitCoord(tp4);
+    obj.addPoint(p[0],p[1]);
+    
+    // obj.addPoint(100,100);
+    // obj.addPoint(200,200);
+    // obj.addPoint(300,200);
+    // obj.addPoint(400,100);
+    
+    Curva2D curva;
+    if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(radioBezier)))
+        obj = curva.getPointsBezier(obj, stof(t));
+    if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(radioSpline)))
+        obj = curva.getPointsBSpline(obj, stof(t));
+    
+    obj.setType("Curve");
+    obj.setName(tname);
+    
+    listPolygons.push_back(obj);
+    listPPC.push_back(obj);
+    //insere objeto no TextView
+    insert_text_buffer(obj);
+    obj.print();
+   
+    redraw();
+}
   
 static Polygon* getPolygon(){
     buffer = gtk_text_view_get_buffer (GTK_TEXT_VIEW (textview));
@@ -355,7 +423,68 @@ void create_new_window(){
 
     gtk_widget_show_all(p_window);
 }
+void window_curva2D(){
+    GtkWidget *p_window, *p_label_indice, *p_label_t;
+    GtkWidget *grid, *p_label_1,*p_label_2,*p_label_3,*p_label_4;
+    GtkWidget *p_label_main,*p_button,*p_button_cancel, *space;
 
+    p_window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
+    gtk_window_set_position(GTK_WINDOW(p_window), GTK_WIN_POS_CENTER);
+    gtk_window_set_title(GTK_WINDOW(p_window), "Curva 2D");
+    gtk_window_set_default_size(GTK_WINDOW(p_window), 300, 200);
+
+    grid = gtk_grid_new();
+    gtk_container_add(GTK_CONTAINER(p_window), grid);
+    
+    radioBezier = gtk_radio_button_new_with_label(NULL,"Bezier");
+    radioSpline = gtk_radio_button_new_with_label_from_widget(GTK_RADIO_BUTTON(radioBezier),"B-Spline");
+    p_label_main = gtk_label_new("ex: P1:< 100,100 >");
+    space = gtk_label_new("");
+    gtk_grid_attach(GTK_GRID(grid), radioBezier,0,0,1,1);
+    gtk_grid_attach(GTK_GRID(grid), radioSpline,1,0,1,1);
+    gtk_grid_attach(GTK_GRID(grid), p_label_main,0,1,1,1);
+    p_label_1 = gtk_label_new("P1: ");
+    gtk_grid_attach(GTK_GRID(grid),p_label_1,0,2,1,2);
+    p_entry_1 = gtk_entry_new();
+    gtk_grid_attach(GTK_GRID(grid), p_entry_1,1,2,1,2);
+    p_label_2= gtk_label_new("P2: ");
+    gtk_grid_attach(GTK_GRID(grid), p_label_2,0,4,1,2);
+    p_entry_2 = gtk_entry_new();
+    gtk_grid_attach(GTK_GRID(grid), p_entry_2,1,4,1,2);
+    p_label_3= gtk_label_new("P3: ");
+    gtk_grid_attach(GTK_GRID(grid), p_label_3,0,6,1,2);
+    p_entry_3 = gtk_entry_new();
+    gtk_grid_attach(GTK_GRID(grid), p_entry_3,1,6,1,2);
+    p_label_4= gtk_label_new("P4: ");
+    gtk_grid_attach(GTK_GRID(grid), p_label_4,0,8,1,2);
+    p_entry_4 = gtk_entry_new();
+    gtk_grid_attach(GTK_GRID(grid), p_entry_4,1,8,1,2);
+    
+    p_label_indice = gtk_label_new("Indice de Parametrização");
+    gtk_grid_attach(GTK_GRID(grid), p_label_indice,1,10,1,1);
+    p_label_t = gtk_label_new("t = ");
+    gtk_grid_attach(GTK_GRID(grid), p_label_t,0,11,1,1);
+    p_entry_t = gtk_entry_new();
+    gtk_grid_attach(GTK_GRID(grid), p_entry_t,1,11,1,1);
+
+    gtk_grid_attach(GTK_GRID(grid), space,1,12,1,1);
+    p_button = gtk_button_new_with_label("Draw");
+    gtk_grid_attach(GTK_GRID(grid), p_button,1,13,1,1);
+    p_button_cancel = gtk_button_new_with_label("Cancel");
+    gtk_grid_attach(GTK_GRID(grid), p_button_cancel,3,13,1,1);
+    
+    gtk_entry_set_text(GTK_ENTRY(p_entry_1),"15,50");
+    gtk_entry_set_text(GTK_ENTRY(p_entry_2),"100,400");
+    gtk_entry_set_text(GTK_ENTRY(p_entry_3),"200,200");
+    gtk_entry_set_text(GTK_ENTRY(p_entry_4),"450,350");
+    gtk_entry_set_text(GTK_ENTRY(p_entry_4),"0.1");
+    
+    g_signal_connect(p_button,"clicked",G_CALLBACK(btn_draw_curva2D),p_window);
+    g_signal_connect_swapped(p_button,"clicked",G_CALLBACK(gtk_widget_destroy),p_window);
+    g_signal_connect_swapped(p_button_cancel,"clicked",G_CALLBACK(gtk_widget_destroy),p_window);
+
+    gtk_widget_show_all(p_window);
+}
 
     void moveUp(){
         win.moveUp();
@@ -503,6 +632,10 @@ int main (int argc, char *argv[])
     button=gtk_button_new_with_label("Clear");
     g_signal_connect(button,"clicked",G_CALLBACK(btn_clear_clicked_cb),window);
     gtk_grid_attach(GTK_GRID(grid), button, 0,0,1,1);
+    
+    button=gtk_button_new_with_label("Curva 2D");
+    g_signal_connect(button,"clicked",G_CALLBACK(window_curva2D),window);
+    gtk_grid_attach(GTK_GRID(grid), button, 0,1,1,1);
     
     gtk_container_set_border_width (GTK_CONTAINER (window), 8);
     frame = gtk_frame_new(NULL);
