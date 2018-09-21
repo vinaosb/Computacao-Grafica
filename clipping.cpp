@@ -25,8 +25,13 @@ class Clipping {
             } else if (it->getType() == "Line") {
                 Polygon temp = lineClip(*it); 
                 ret.push_back(temp);
-            } else {
+            } else if (it->getType() == "Curve"){
+                Polygon temp = curveClip(*it); 
+                temp.setType(it->getType());
+                ret.push_back(temp);
+            }else {
                 Polygon temp = polyClip(*it); 
+                temp.setType(it->getType());
                 ret.push_back(temp);
             }
         }
@@ -165,6 +170,7 @@ class Clipping {
                 lineTemp.addPoint(p.getBeginIterator()->x, p.getBeginIterator()->y);
                 lineTemp.addPoint(it->x,it->y);
             }
+           
             lineTemp = lineClip(lineTemp);
             ret.addPoints(lineTemp.getPoints());
             
@@ -178,6 +184,19 @@ class Clipping {
             }
         }
         
+        return ret;
+    }
+    
+    Polygon curveClip(Polygon p){
+        Polygon ret, temp;
+        ret.clear();temp.clear();
+        for (vector<Polygon::point>::iterator it = p.getBeginIterator(); it != p.getEndIterator()-1; ++it) {
+            temp.addPoint(it->x, it->y);
+            temp.addPoint((it+1)->x, (it+1)->y);
+            temp = lineClip(temp);
+            ret.addPoints(temp.getPoints());
+            temp.clear();
+        } 
         return ret;
     }
 };
