@@ -7,16 +7,51 @@ using namespace std;
 class Curva2D{
     public:
     Curva2D(){}
+
+	Polygon getAllBSpline(Polygon p, float t) {
+		Polygon temp, ret;
+		vector<Polygon::point> temp2;
+		for (vector<Polygon::point>::iterator i = p.getBeginIterator(); i != p.getEndIterator()-3; i++)
+		{
+			temp.clear();
+			temp2.clear();
+			temp2.push_back(i);
+			temp2.push_back(i+1);
+			temp2.push_back(i+2);
+			temp2.push_back(i+3);
+			temp.addPoints(temp2);
+
+			ret.addPoints(getPointsBSpline(temp, t).getPoints());
+		}
+
+		return ret;
+	}
+
+	Polygon getAllBezier(Polygon p, float t) {
+		Polygon ret, temp;
+		vector<Polygon::point> temp2;
+
+		for (vector<Polygon::point>::iterator i = p.getBeginIterator(); i < p.getEndIterator()-3; i += 3)
+		{
+			temp.clear();
+			temp2.clear();
+
+
+			temp2.push_back(i);
+			temp2.push_back(i + 1);
+			temp2.push_back(i + 2);
+			temp2.push_back(i + 3);
+			temp.addPoints(temp2);
+
+			ret.addPoints(getPointsBezier(temp, t).getPoints());
+		}
+	}
     
     Polygon getPointsBezier(Polygon pontos, float param){
         float x,y,t,px[4],py[4], ct[4];
         Polygon ret;
         ret.clear();
-		int i = 0;
-		for (vector<Polygon::point>::iterator p = pontos.getBeginIterator(); p != pontos.getEndIterator(); p++)
-		{
-
-		}
+		
         px[0]=pontos.getPoints().at(0).x;
         px[1]=pontos.getPoints().at(1).x;
         px[2]=pontos.getPoints().at(2).x;
