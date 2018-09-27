@@ -12,6 +12,11 @@ class Curva2D{
         float x,y,t,px[4],py[4], ct[4];
         Polygon ret;
         ret.clear();
+		int i = 0;
+		for (vector<Polygon::point>::iterator p = pontos.getBeginIterator(); p != pontos.getEndIterator(); p++)
+		{
+
+		}
         px[0]=pontos.getPoints().at(0).x;
         px[1]=pontos.getPoints().at(1).x;
         px[2]=pontos.getPoints().at(2).x;
