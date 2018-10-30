@@ -78,43 +78,8 @@ static void drawPolygon(vector<Polygon>::iterator o)
 	cairo_stroke(cr);
 	gtk_widget_queue_draw(window);
 }
-static void drawArea(Polygon o)
+static void drawArea()
 {
-	cairo_t *cr;
-	cr = cairo_create(surface);
-	cairo_set_line_width(cr, 1);
-
-
-	bool aux = false;
-	float xf = 300, yf = 300;
-
-	for (vector<Polygon::point>::iterator it = o.getBeginIterator(); it != o.getEndIterator(); ++it) {
-		xf = ((it->x - win.min.x)*(vp.max.x - vp.min.x) / ((win.max.x - win.min.x)));
-		yf = (1 - ((it->y - win.min.y) / ((win.max.y - win.min.y))))*(vp.max.y - vp.min.y);
-
-		if (aux == false) {
-			aux = true;
-			cairo_move_to(cr, xf, yf);
-		}
-		cairo_set_line_cap(cr, CAIRO_LINE_CAP_ROUND);
-		cairo_line_to(cr, xf, yf);
-	}
-
-	xf = ((o.getPoints().front().x - win.min.x)*(vp.max.x - vp.min.x) / ((win.max.x - win.min.x)));
-	yf = (1 - ((o.getPoints().front().y - win.min.y) / ((win.max.y - win.min.y))))*(vp.max.y - vp.min.y);
-	cairo_line_to(cr, xf, yf);
-
-
-	cairo_set_source_rgb(cr, 1, 0, 0);
-	cairo_stroke(cr);
-	gtk_widget_queue_draw(window);
-}
-
-
-static void redraw(void)
-{
-	clear_surface();
-
 	cairo_t *cr;
 	cr = cairo_create(surface);
 	cairo_set_line_width(cr, 1);
@@ -126,6 +91,14 @@ static void redraw(void)
 	cairo_set_source_rgb(cr, 1, 0, 0);
 	cairo_stroke(cr);
 	gtk_widget_queue_draw(window);
+}
+
+
+static void redraw(void)
+{
+	clear_surface();
+
+	drawArea();
 
 	Clipping c(vp.min.x, vp.max.x, vp.min.y, vp.max.y);
 	listClip.clear();
