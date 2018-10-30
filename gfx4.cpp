@@ -8,7 +8,7 @@
 #include "window.cpp"
 #include "viewport.cpp"
 #include "descritorOBJ.cpp"
-#include "Curva2D.cpp"
+#include "curva2D.cpp"
 #include <iterator>
 
 #define moveSpace 20
@@ -91,84 +91,62 @@ static void drawPolygon(vector<Polygon>::iterator o)
     cairo_stroke(cr);
     gtk_widget_queue_draw (window);
 }
-static void drawArea(Polygon o)
+
+
+static void drawArea()
 {
-    cairo_t *cr;
-    cr = cairo_create (surface);  
-    cairo_set_line_width (cr, 1);
-    
-    
-    bool aux = false;
-    float xf = 300,yf = 300;
-    
-    for (vector<Polygon::point>::iterator it = o.getBeginIterator(); it != o.getEndIterator();++it) {
-        xf = ((it->x - win.min.x)*(vp.max.x - vp.min.x)/((win.max.x-win.min.x)));
-        yf = (1 - ((it->y - win.min.y)/((win.max.y-win.min.y))))*(vp.max.y - vp.min.y);
-        
-        if (aux == false) {
-            aux = true;
-            cairo_move_to(cr, xf, yf);
-        }
-        cairo_set_line_cap  (cr, CAIRO_LINE_CAP_ROUND);
-        cairo_line_to(cr, xf, yf);
-    }
-    
-    xf = ((o.getPoints().front().x - win.min.x)*(vp.max.x - vp.min.x)/((win.max.x-win.min.x)));
-    yf = (1 - ((o.getPoints().front().y - win.min.y)/((win.max.y-win.min.y))))*(vp.max.y - vp.min.y);
-    cairo_line_to(cr, xf, yf);
-
-    
-    cairo_set_source_rgb (cr, 1, 0, 0);
-    cairo_stroke(cr);
-    gtk_widget_queue_draw (window);
+	cairo_t *cr;
+	cr = cairo_create(surface);
+	cairo_set_line_width(cr, 1);
+	cairo_move_to(cr, 9.5, 9.5);
+	cairo_line_to(cr, 370.5, 9.5);
+	cairo_line_to(cr, 370.5, 370.5);
+	cairo_line_to(cr, 9.5, 370.5);
+	cairo_line_to(cr, 9.5, 9.5);
+	cairo_set_source_rgb(cr, 1, 0, 0);
+	cairo_stroke(cr);
+	gtk_widget_queue_draw(window);
 }
 
 
-static void redraw (void)
-{  	 	    	    	 	
-    clear_surface();
-    
-    Polygon obj("Tela");
-    obj.addPoint(vp.min.x,vp.min.y);
-    obj.addPoint(vp.max.x,vp.min.y);
-    obj.addPoint(vp.max.x,vp.max.y);
-    obj.addPoint(vp.min.x,vp.max.y);
-    
-    drawArea(obj);
-    
-    Clipping c(vp.min.x,vp.max.x,vp.min.y,vp.max.y);
-    listClip.clear();
-    vector<Polygon> temp = c.clip(listPPC);
-    listClip.insert(listClip.end(), temp.begin(), temp.end());
-    cout << "listclip size: "<<listClip.size()<<endl;
-    
-    if (listClip.size() > 0)
-        for (vector<Polygon>::iterator it = listClip.begin(); it != listClip.end(); ++it) {
-            cout << it->getPoints().at(0).x << endl;
-            cout << "ok" << endl;
-            cout << "getTypeIT:"<<it->getType() <<endl;
-            drawPolygon(it);
-        }
-}
-
-static void move (int x, int y)
+static void redraw(void)
 {
-    for (vector<Polygon>::iterator it=listPPC.begin(); it != listPPC.end(); ++it) {
-        it->translation(x,y);
-    }
-    redraw();
+	clear_surface();
+
+	drawArea();
+
+	Clipping c(vp.min.x, vp.max.x, vp.min.y, vp.max.y);
+	listClip.clear();
+	vector<Polygon> temp = c.clip(listPPC);
+	listClip.insert(listClip.end(), temp.begin(), temp.end());
+	cout << "listclip size: " << listClip.size() << endl;
+
+	if (listClip.size() > 0)
+		for (vector<Polygon>::iterator it = listClip.begin(); it != listClip.end(); ++it) {
+			cout << it->getPoints().at(0).x << endl;
+			cout << "ok" << endl;
+			drawPolygon(it);
+		}
 }
 
-static void zoomIn () {
-    win.zoom (TRUE);
-    //vp.zoom (TRUE);
-    redraw();
+static void move(int x, int y)
+{
+	for (vector<Polygon>::iterator it = listPPC.begin(); it != listPPC.end(); ++it) {
+		it->translation(x, y);
+	}
+	redraw();
+}
+
+static void zoomIn() {
+	//win.zoom (TRUE);
+	vp.zoom(TRUE);
+	redraw();
 }
 
 static void zoomOut() {
-    win.zoom (FALSE);
-    //vp.zoom (FALSE);
-    redraw();
+	//win.zoom (FALSE);
+	vp.zoom(FALSE);
+	redraw();
 }
 
 static void rotVP1() {
