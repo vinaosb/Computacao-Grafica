@@ -8,7 +8,7 @@
 #include "window.cpp"
 #include "viewport.cpp"
 #include "descritorOBJ.cpp"
-#include "Curva2D.cpp"
+#include "curva2D.cpp"
 #include <iterator>
 
 #define moveSpace 20
