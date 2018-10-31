@@ -24,15 +24,18 @@ class Clipping {
                     ret.push_back(temp);
             } else if (it->getType() == "Line") {
                 Polygon temp = lineClip(*it); 
-                ret.push_back(temp);
+                if (temp.getPoints().size() > 0)
+                    ret.push_back(temp);
             } else if (it->getType() == "Curve"){
                 Polygon temp = curveClip(*it); 
                 temp.setType(it->getType());
-                ret.push_back(temp);
+                if (temp.getPoints().size() > 0)
+                    ret.push_back(temp);
             }else {
                 Polygon temp = polyClip(*it); 
                 temp.setType(it->getType());
-                ret.push_back(temp);
+                if (temp.getPoints().size() > 0)
+                    ret.push_back(temp);
             }
         }
         //cout << "size:" << ret[0].getPoints().size() << endl;
@@ -80,80 +83,46 @@ class Clipping {
         q[2] = l.getPoints().at(0).y - ymin;
         q[3] = ymax - l.getPoints().at(0).y;
         
+        float valor1=0, valor2=1, r, x, y;
         for(int i=0;i<4;i++)
         {
-            if(p[i]==0)
-            {
-                cout<<"line is parallel to one of the clipping boundary";
-                if(q[i]>=0)
-                {
-                    if(i<2)
-                    {
-                        if(y1<ymin)
-                        {
-                            y1=ymin;
-                        }
-                    
-                        if(y2>ymax)
-                        {
-                            y2=ymax;
-                        }
-                    
-                        ret.addPoint(x1,y1);
-                        ret.addPoint(x2,y2);
-                    }
-                    
-                    if(i>1)
-                    {
-                        if(x1<xmin)
-                        {
-                            x1=xmin;
-                        }
-                        
-                        if(x2>xmax)
-                        {
-                            x2=xmax;
-                        }
-                        
-                        ret.addPoint(x1,y1);
-                        ret.addPoint(x2,y2);
-                        return ret;
-                    }
+            cout << "p[i]="<<p[1]<<endl;
+            if(p[i]==0){
+                cout << "entrou igual a 0"<<endl;
+                if(q[i] >= 0)
+                    continue;
+                else{
+                    cout << "linha esta completamente fora" << endl;
+                    return ret;
                 }
             }
+            else{
+                cout <<"nao entrou"<<endl;
+                r = q[i]/p[i];
+                if(p[i] < 0){
+                    valor1 = std::max(valor1, r);
+                }else if(p[i] > 0){
+                    valor2 = std::min(valor2, r);
+                }
+            }   
         }
-        
-        float t1 = 0, t2 = 1, temp = 0;
-        
-        for(int i=0;i<4;i++)
-        {
-            temp=q[i]/p[i];
-            
-            if(p[i]<0)
-            {
-                if(t1<=temp)
-                    t1=temp;
+        x = x1;
+        y = y1;
+        if (valor1 > valor2){
+            cout << "linha esta completamente fora" << endl;
+        }
+        else{
+            if(valor1 != 0){
+                x = x1 + valor1 * dx;
+                y = y1 + valor1 * dy;
             }
-            else
-            {
-                if(t2>temp)
-                    t2=temp;
+            if(valor2 != 1){
+                x2 = x1 + valor2 * dx;
+                y2 = y1 + valor2 * dy;
             }
+            ret.addPoint(x, y);
+            ret.addPoint(x2, y2);
         }
-        
-        float xx1,xx2,yy1,yy2;
-        
-        if(t1<t2)
-        {
-            xx1 = x1 + t1 * p[1];
-            xx2 = x1 + t2 * p[1];
-            yy1 = y1 + t1 * p[3];
-            yy2 = y1 + t2 * p[3];
-            ret.addPoint(xx1,yy1);
-            ret.addPoint(xx2,yy2);
-        }
-    
-        
         return ret;
     }
     
@@ -161,29 +130,35 @@ class Clipping {
     Polygon polyClip (Polygon p) {
         Polygon ret, lineTemp;
         ret.clear(), lineTemp.clear();
-        
+        cout << "Polygon before clipping"<<endl;
+        p.print();
         for (vector<Polygon::point>::iterator it = p.getBeginIterator(); it != p.getEndIterator(); ++it) {
+            cout <<"iterator"<<endl;
             if(it != p.getEndIterator()) {
                 lineTemp.addPoint(it->x, it->y);
                 lineTemp.addPoint((it+1)->x,(it+1)->y);
+                cout <<"if"<<endl;
             } else  {
                 lineTemp.addPoint(p.getBeginIterator()->x, p.getBeginIterator()->y);
                 lineTemp.addPoint(it->x,it->y);
+                cout << "else"<<endl;
             }
-           
+            lineTemp.print();
             lineTemp = lineClip(lineTemp);
-            ret.addPoints(lineTemp.getPoints());
+            if(lineTemp.getPoints().size()>0)
+                ret.addPoints(lineTemp.getPoints());
             
             lineTemp.clear();
         }
-        
-        for (vector<Polygon::point>::iterator it = ret.getBeginIterator(); it != ret.getEndIterator()-1; ++it) {
-            if (it->x == (it+1)->x and it->y == (it+1)->y) {
-                ret.erase(it+1);
-                it--;
-            }
-        }
-        
+        ret.print();
+        // cout<<"polyClip: points added"<<endl;
+        // for (vector<Polygon::point>::iterator it = ret.getBeginIterator(); it != ret.getEndIterator(); ++it) {
+        //     if (it->x == (it+1)->x and it->y == (it+1)->y) {
+        //         ret.erase(it+1);
+        //         it--;
+        //     }
+        // }
+        // cout<<"polyClip: erase point"<<endl;
         return ret;
     }
     
