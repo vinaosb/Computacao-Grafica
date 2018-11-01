@@ -8,7 +8,7 @@
 #include "window.cpp"
 #include "viewport.cpp"
 #include "descritorOBJ.cpp"
-#include "curva2D.cpp"
+#include "Curva2D.cpp"
 #include <iterator>
 
 #define moveSpace 20
@@ -54,7 +54,22 @@ static void clear_surface (void)
   cairo_paint (cr);
   cairo_destroy (cr);
 }
-
+static void drawPoint(vector<Polygon>::iterator o)
+{
+  cairo_t *cr;
+  cr = cairo_create (surface);  
+  //cairo_set_line_width (cr, pointWidth);
+  cairo_set_line_cap  (cr, CAIRO_LINE_CAP_ROUND); /* Round dot*/
+    float xf = 0,yf = 0;
+    for (vector<Polygon::point>::iterator it = o->getBeginIterator(); it != o->getEndIterator();++it) {
+        xf = ((it->x - win.min.x)*(vp.max.x - vp.min.x)/((win.max.x-win.min.x)));
+        yf = (1 - ((it->y - win.min.y)/((win.max.y-win.min.y))))*(vp.max.y - vp.min.y);
+        cairo_move_to(cr, xf, yf);
+        cairo_line_to(cr, xf, yf);
+    }
+  cairo_stroke(cr);
+  gtk_widget_queue_draw (window);
+}
 static void drawPolygon(vector<Polygon>::iterator o)
 {
     cairo_t *cr;
@@ -63,90 +78,141 @@ static void drawPolygon(vector<Polygon>::iterator o)
     
     
     bool aux = false;
-    float xf = 0,yf = 0;
+    int skip=0;
+    float xf = 0,yf = 0, xf2 =0 , yf2=0;
+    //cout<<"Draw Polygon" <<endl;
+    for (vector<Polygon::point>::iterator it = o->getBeginIterator(); it != o->getEndIterator()-1;++it) {
+       //cout <<"check "<<endl;
+        xf = ((it->x - win.min.x)*(vp.max.x - vp.min.x)/((win.max.x-win.min.x)));
+        yf = (1 - ((it->y - win.min.y)/((win.max.y-win.min.y))))*(vp.max.y - vp.min.y);
+        xf2 = (((it+1)->x - win.min.x)*(vp.max.x - vp.min.x)/((win.max.x-win.min.x)));
+        yf2 = (1 - (((it+1)->y - win.min.y)/((win.max.y-win.min.y))))*(vp.max.y - vp.min.y);
+        if(skip++ % 2 != 0)
+            continue;
+        //skip++;
+        
+        // if (aux == false) {
+        //     aux = true;
+            cairo_move_to(cr, xf, yf);
+            //cout <<"draw poly "<<xf<<","<<yf<<endl;
+       // }
+        cairo_set_line_cap  (cr, CAIRO_LINE_CAP_ROUND); /* Round dot*/
+        cairo_line_to(cr, xf2, yf2);
+        //cout <<"draw poly final "<<xf<<","<<yf<<endl;
+    }
     
-    for (vector<Polygon::point>::iterator it = o->getBeginIterator(); it != o->getEndIterator();++it) {
+    // xf = ((o->getPoints().front().x - win.min.x)*(vp.max.x - vp.min.x)/((win.max.x-win.min.x)));
+    // yf = (1 - ((o->getPoints().front().y - win.min.y)/((win.max.y-win.min.y))))*(vp.max.y - vp.min.y);
+    // if(o->getType() != "Curve"){
+    //     cairo_line_to(cr, xf, yf);
+    //     cout <<"draw poly after "<<xf<<","<<yf<<endl;
+    // }
+    // cout << "getTypeC:"<<o->getType() <<endl;
+    // cout << xf << " " << yf << endl;
+  
+    cairo_stroke(cr);
+    gtk_widget_queue_draw (window);
+}
+static void drawArea(Polygon o)
+{
+    cairo_t *cr;
+    cr = cairo_create (surface);  
+    cairo_set_line_width (cr, 1);
+    
+    
+    bool aux = false;
+    float xf = 300,yf = 300;
+    
+    for (vector<Polygon::point>::iterator it = o.getBeginIterator(); it != o.getEndIterator();++it) {
         xf = ((it->x - win.min.x)*(vp.max.x - vp.min.x)/((win.max.x-win.min.x)));
         yf = (1 - ((it->y - win.min.y)/((win.max.y-win.min.y))))*(vp.max.y - vp.min.y);
         
         if (aux == false) {
             aux = true;
             cairo_move_to(cr, xf, yf);
-            cout <<"draw poly "<<xf<<","<<yf<<endl;
         }
-        cairo_set_line_cap  (cr, CAIRO_LINE_CAP_ROUND); /* Round dot*/
+        cairo_set_line_cap  (cr, CAIRO_LINE_CAP_ROUND);
         cairo_line_to(cr, xf, yf);
-        cout <<"draw poly final "<<xf<<","<<yf<<endl;
     }
     
-    xf = ((o->getPoints().front().x - win.min.x)*(vp.max.x - vp.min.x)/((win.max.x-win.min.x)));
-    yf = (1 - ((o->getPoints().front().y - win.min.y)/((win.max.y-win.min.y))))*(vp.max.y - vp.min.y);
-    if(o->getType() != "Curve"){
-        cairo_line_to(cr, xf, yf);
-        cout <<"draw poly after "<<xf<<","<<yf<<endl;
-    }
-    cout << "getTypeC:"<<o->getType() <<endl;
-    cout << xf << " " << yf << endl;
-  
+    xf = ((o.getPoints().front().x - win.min.x)*(vp.max.x - vp.min.x)/((win.max.x-win.min.x)));
+    yf = (1 - ((o.getPoints().front().y - win.min.y)/((win.max.y-win.min.y))))*(vp.max.y - vp.min.y);
+    cairo_line_to(cr, xf, yf);
+
+    
+    cairo_set_source_rgb (cr, 1, 0, 0);
     cairo_stroke(cr);
     gtk_widget_queue_draw (window);
 }
 
 
-static void drawArea()
-{
-	cairo_t *cr;
-	cr = cairo_create(surface);
-	cairo_set_line_width(cr, 1);
-	cairo_move_to(cr, 9.5, 9.5);
-	cairo_line_to(cr, 370.5, 9.5);
-	cairo_line_to(cr, 370.5, 370.5);
-	cairo_line_to(cr, 9.5, 370.5);
-	cairo_line_to(cr, 9.5, 9.5);
-	cairo_set_source_rgb(cr, 1, 0, 0);
-	cairo_stroke(cr);
-	gtk_widget_queue_draw(window);
+static void redraw (void)
+{  	 	    	    	 	
+    clear_surface();
+    
+    Polygon obj("Tela");
+    obj.addPoint(vp.min.x,vp.min.y);
+    obj.addPoint(vp.max.x,vp.min.y);
+    obj.addPoint(vp.max.x,vp.max.y);
+    obj.addPoint(vp.min.x,vp.max.y);
+    
+    drawArea(obj);
+//     cairo_t *cr; 
+
+// 	cr = cairo_create(surface); 
+// 	cairo_set_line_width(cr, 1); 
+// 	cairo_move_to(cr, 9.5, 9.5); 
+// 	cairo_line_to(cr, 370.5, 9.5); 
+// 	cairo_line_to(cr, 370.5, 370.5); 
+// 	cairo_line_to(cr, 9.5, 370.5); 
+// 	cairo_line_to(cr, 9.5, 9.5); 
+// 	cairo_set_source_rgb(cr, 1, 0, 0); 
+// 	cairo_stroke(cr); 
+// 	gtk_widget_queue_draw(window); 
+    
+    Clipping c(vp.min.x,vp.max.x,vp.min.y,vp.max.y);
+    listClip.clear();
+    vector<Polygon> temp = c.clip(listPPC);
+    listClip.insert(listClip.end(), temp.begin(), temp.end());
+    //cout << "listclip size: "<<listClip.size()<<endl;
+    
+    if (listClip.size() > 0)
+        for (vector<Polygon>::iterator it = listClip.begin(); it != listClip.end(); ++it) {
+            //cout << it->getPoints().at(0).x << endl;
+            //cout << "ok" << endl;
+            //cout << "getTypeIT:"<<it->getType() <<endl;
+            if(it->getType()=="Point")
+                drawPoint(it);
+            else
+                drawPolygon(it);
+        }
+    // if (listPPC.size() > 0)
+    //     for (vector<Polygon>::iterator it = listPPC.begin(); it != listPPC.end(); ++it) {
+    //         cout << it->getPoints().at(0).x << endl;
+    //         cout << "ok" << endl;
+    //         cout << "getTypeIT:"<<it->getType() <<endl;
+    //         drawPolygon(it);
+    //     }
 }
 
-
-static void redraw(void)
+static void move (int x, int y)
 {
-	clear_surface();
-
-	drawArea();
-
-	Clipping c(vp.min.x, vp.max.x, vp.min.y, vp.max.y);
-	listClip.clear();
-	vector<Polygon> temp = c.clip(listPPC);
-	listClip.insert(listClip.end(), temp.begin(), temp.end());
-	cout << "listclip size: " << listClip.size() << endl;
-
-	if (listClip.size() > 0)
-		for (vector<Polygon>::iterator it = listClip.begin(); it != listClip.end(); ++it) {
-			cout << it->getPoints().at(0).x << endl;
-			cout << "ok" << endl;
-			drawPolygon(it);
-		}
+    for (vector<Polygon>::iterator it=listPPC.begin(); it != listPPC.end(); ++it) {
+        it->translation(x,y);
+    }
+    redraw();
 }
 
-static void move(int x, int y)
-{
-	for (vector<Polygon>::iterator it = listPPC.begin(); it != listPPC.end(); ++it) {
-		it->translation(x, y);
-	}
-	redraw();
-}
-
-static void zoomIn() {
-	//win.zoom (TRUE);
-	vp.zoom(TRUE);
-	redraw();
+static void zoomIn () {
+    win.zoom (TRUE);
+    //vp.zoom (TRUE);
+    redraw();
 }
 
 static void zoomOut() {
-	//win.zoom (FALSE);
-	vp.zoom(FALSE);
-	redraw();
+    win.zoom (FALSE);
+    //vp.zoom (FALSE);
+    redraw();
 }
 
 static void rotVP1() {
@@ -455,7 +521,7 @@ void window_curva2D(){
     gtk_entry_set_text(GTK_ENTRY(p_entry_2),"100,400");
     gtk_entry_set_text(GTK_ENTRY(p_entry_3),"200,200");
     gtk_entry_set_text(GTK_ENTRY(p_entry_4),"450,350");
-    gtk_entry_set_text(GTK_ENTRY(p_entry_4),"0.1");
+    gtk_entry_set_text(GTK_ENTRY(p_entry_t),"0.1");
     
     g_signal_connect(p_button,"clicked",G_CALLBACK(btn_draw_curva2D),p_window);
     g_signal_connect_swapped(p_button,"clicked",G_CALLBACK(gtk_widget_destroy),p_window);
