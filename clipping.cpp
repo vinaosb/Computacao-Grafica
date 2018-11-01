@@ -86,9 +86,9 @@ class Clipping {
         float valor1=0, valor2=1, r, x, y;
         for(int i=0;i<4;i++)
         {
-            cout << "p[i]="<<p[1]<<endl;
+            //cout << "p[i]="<<p[1]<<endl;
             if(p[i]==0){
-                cout << "entrou igual a 0"<<endl;
+                //cout << "entrou igual a 0"<<endl;
                 if(q[i] >= 0)
                     continue;
                 else{
@@ -97,7 +97,7 @@ class Clipping {
                 }
             }
             else{
-                cout <<"nao entrou"<<endl;
+                //cout <<"nao entrou"<<endl;
                 r = q[i]/p[i];
                 if(p[i] < 0){
                     valor1 = std::max(valor1, r);
@@ -132,24 +132,29 @@ class Clipping {
         ret.clear(), lineTemp.clear();
         cout << "Polygon before clipping"<<endl;
         p.print();
+    
         for (vector<Polygon::point>::iterator it = p.getBeginIterator(); it != p.getEndIterator(); ++it) {
             cout <<"iterator"<<endl;
-            if(it != p.getEndIterator()) {
+            cout << "it:"<<it - p.getBeginIterator()<<endl;
+            
+            if(it != p.getEndIterator()-1) {
                 lineTemp.addPoint(it->x, it->y);
                 lineTemp.addPoint((it+1)->x,(it+1)->y);
                 cout <<"if"<<endl;
+                lineTemp.print();
             } else  {
-                lineTemp.addPoint(p.getBeginIterator()->x, p.getBeginIterator()->y);
                 lineTemp.addPoint(it->x,it->y);
+                lineTemp.addPoint(p.getBeginIterator()->x, p.getBeginIterator()->y);
                 cout << "else"<<endl;
             }
-            lineTemp.print();
+            //lineTemp.print();
             lineTemp = lineClip(lineTemp);
             if(lineTemp.getPoints().size()>0)
                 ret.addPoints(lineTemp.getPoints());
             
             lineTemp.clear();
         }
+        cout<<"Ploygon clipped to:"<<endl;
         ret.print();
         // cout<<"polyClip: points added"<<endl;
         // for (vector<Polygon::point>::iterator it = ret.getBeginIterator(); it != ret.getEndIterator(); ++it) {
