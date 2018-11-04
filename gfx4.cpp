@@ -18,8 +18,7 @@
 using namespace std;
 //
 //######## TO DO ########
-//1-Corrigir ZoomIn e ZoomOut
-//2-B-Spline deve aceitar qualquer quantidade de pontos.
+
 //##########
 
 static cairo_surface_t *surface = NULL;
@@ -29,6 +28,8 @@ GtkWidget *textview;
 
 GtkWidget *gx1,*gx2,*gx3,*gy1,*gy2,*gy3,*name,*p_entry_x,*p_entry_y;
 GtkWidget *p_entry_1,*p_entry_2,*p_entry_3,*p_entry_4,*p_entry_t,*radioBezier, *radioSpline;
+GtkWidget *p_entry_5,*p_entry_6,*p_entry_7,*p_entry_8,*p_entry_9,*p_entry_10,
+*p_entry_11,*p_entry_12,*p_entry_13,*p_entry_14,*p_entry_15,*p_entry_16;
 GtkTextBuffer *buffer;
 GtkTextMark *mark;
 GtkTextIter iter;
@@ -150,6 +151,16 @@ static void redraw (void)
 {  	 	    	    	 	
     clear_surface();
     
+    // vp.min.x = win.min.x + 10;
+    // vp.min.y = win.min.y + 10;
+    // vp.max.x = win.max.x - 10;
+    // vp.max.y = win.max.y - 10;
+    // vp.min.x = 9.5;
+    // vp.min.y = 9.5;
+    // vp.max.x = 370.5;
+    // vp.max.y = 370.5;
+    cout << "Viewport:"<<endl;
+    cout<<vp.min.x<<","<< vp.min.y<<","<< vp.max.x<<","<< vp.max.y <<endl;
     Polygon obj("Tela");
     obj.addPoint(vp.min.x,vp.min.y);
     obj.addPoint(vp.max.x,vp.min.y);
@@ -205,7 +216,7 @@ static void move (int x, int y)
 
 static void zoomIn () {
     win.zoom (TRUE);
-    //vp.zoom (TRUE);
+   // vp.zoom (TRUE);
     redraw();
 }
 
@@ -342,6 +353,18 @@ static void btn_draw_curva2D(){
     string tp3(gtk_entry_get_text(GTK_ENTRY(p_entry_3)));
     string tp4(gtk_entry_get_text(GTK_ENTRY(p_entry_4)));
     string t(gtk_entry_get_text(GTK_ENTRY(p_entry_t)));
+    string tp5(gtk_entry_get_text(GTK_ENTRY(p_entry_5)));
+    string tp6(gtk_entry_get_text(GTK_ENTRY(p_entry_6)));
+    string tp7(gtk_entry_get_text(GTK_ENTRY(p_entry_7)));
+    string tp8(gtk_entry_get_text(GTK_ENTRY(p_entry_8)));
+    string tp9(gtk_entry_get_text(GTK_ENTRY(p_entry_9)));
+    string tp10(gtk_entry_get_text(GTK_ENTRY(p_entry_10)));
+    string tp11(gtk_entry_get_text(GTK_ENTRY(p_entry_11)));
+    string tp12(gtk_entry_get_text(GTK_ENTRY(p_entry_12)));
+    string tp13(gtk_entry_get_text(GTK_ENTRY(p_entry_13)));
+    string tp14(gtk_entry_get_text(GTK_ENTRY(p_entry_14)));
+    string tp15(gtk_entry_get_text(GTK_ENTRY(p_entry_15)));
+    string tp16(gtk_entry_get_text(GTK_ENTRY(p_entry_16)));
     vector<int> p;
     p = splitCoord(tp1);
     obj.addPoint(p[0],p[1]);
@@ -351,6 +374,50 @@ static void btn_draw_curva2D(){
     obj.addPoint(p[0],p[1]);
     p = splitCoord(tp4);
     obj.addPoint(p[0],p[1]);
+    if(tp5!=""){
+        p = splitCoord(tp5);
+        obj.addPoint(p[0],p[1]);
+    }
+    if(tp6!=""){
+        p = splitCoord(tp6);
+        obj.addPoint(p[0],p[1]);
+    }
+    if(tp7!=""){
+        p = splitCoord(tp7);
+        obj.addPoint(p[0],p[1]);
+    }
+    if(tp8!=""){
+        p = splitCoord(tp8);
+        obj.addPoint(p[0],p[1]);
+    }
+    if(tp9!=""){
+        p = splitCoord(tp9);
+        obj.addPoint(p[0],p[1]);
+    }
+    if(tp10!=""){
+        p = splitCoord(tp10);
+        obj.addPoint(p[0],p[1]);
+    }
+    if(tp11!=""){
+        p = splitCoord(tp11);
+        obj.addPoint(p[0],p[1]);
+    }
+    if(tp12!=""){
+        p = splitCoord(tp12);
+        obj.addPoint(p[0],p[1]);
+    }if(tp13!=""){
+        p = splitCoord(tp13);
+        obj.addPoint(p[0],p[1]);
+    }if(tp14!=""){
+        p = splitCoord(tp14);
+        obj.addPoint(p[0],p[1]);
+    }if(tp15!=""){
+        p = splitCoord(tp15);
+        obj.addPoint(p[0],p[1]);
+    }if(tp16!=""){
+        p = splitCoord(tp16);
+        obj.addPoint(p[0],p[1]);
+    }
     
     // obj.addPoint(100,100);
     // obj.addPoint(200,200);
@@ -359,13 +426,14 @@ static void btn_draw_curva2D(){
     
     Curva2D curva;
     if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(radioBezier)))
-        obj = curva.getPointsBezier(obj, stof(t));
+        obj = curva.getAllBezier(obj, stof(t));
+
     if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(radioSpline)))
-        obj = curva.getPointsBSpline(obj, stof(t));
+        obj = curva.getAllBSpline(obj, stof(t));
     
     obj.setType("Curve");
     obj.setName(tname);
-    
+
     listPolygons.push_back(obj);
     listPPC.push_back(obj);
     //insere objeto no TextView
@@ -470,6 +538,8 @@ void create_new_window(){
 void window_curva2D(){
     GtkWidget *p_window, *p_label_indice, *p_label_t;
     GtkWidget *grid, *p_label_1,*p_label_2,*p_label_3,*p_label_4;
+    GtkWidget *p_label_5,*p_label_6,*p_label_7,*p_label_8,*p_label_9,*p_label_10,*p_label_11,*p_label_12,
+    *p_label_13,*p_label_14,*p_label_15,*p_label_16;
     GtkWidget *p_label_main,*p_button,*p_button_cancel, *space;
 
     p_window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
@@ -503,6 +573,54 @@ void window_curva2D(){
     gtk_grid_attach(GTK_GRID(grid), p_label_4,0,8,1,2);
     p_entry_4 = gtk_entry_new();
     gtk_grid_attach(GTK_GRID(grid), p_entry_4,1,8,1,2);
+    p_label_5= gtk_label_new("P5: ");
+    gtk_grid_attach(GTK_GRID(grid), p_label_5,2,2,1,2);
+    p_entry_5 = gtk_entry_new();
+    gtk_grid_attach(GTK_GRID(grid), p_entry_5,3,2,1,2);
+    p_label_6= gtk_label_new("P6: ");
+    gtk_grid_attach(GTK_GRID(grid), p_label_6,2,4,1,2);
+    p_entry_6 = gtk_entry_new();
+    gtk_grid_attach(GTK_GRID(grid), p_entry_6,3,4,1,2);
+    p_label_7= gtk_label_new("P7: ");
+    gtk_grid_attach(GTK_GRID(grid), p_label_7,2,6,1,2);
+    p_entry_7 = gtk_entry_new();
+    gtk_grid_attach(GTK_GRID(grid), p_entry_7,3,6,1,2);
+    p_label_8= gtk_label_new("P8: ");
+    gtk_grid_attach(GTK_GRID(grid), p_label_8,2,8,1,2);
+    p_entry_8 = gtk_entry_new();
+    gtk_grid_attach(GTK_GRID(grid), p_entry_8,3,8,1,2);
+    p_label_9= gtk_label_new("P9: ");
+    gtk_grid_attach(GTK_GRID(grid), p_label_9,4,2,1,2);
+    p_entry_9 = gtk_entry_new();
+    gtk_grid_attach(GTK_GRID(grid), p_entry_9,5,2,1,2);
+    p_label_10= gtk_label_new("P10: ");
+    gtk_grid_attach(GTK_GRID(grid), p_label_10,4,4,1,2);
+    p_entry_10 = gtk_entry_new();
+    gtk_grid_attach(GTK_GRID(grid), p_entry_10,5,4,1,2);
+    p_label_11= gtk_label_new("P11: ");
+    gtk_grid_attach(GTK_GRID(grid), p_label_11,4,6,1,2);
+    p_entry_11 = gtk_entry_new();
+    gtk_grid_attach(GTK_GRID(grid), p_entry_11,5,6,1,2);
+    p_label_12= gtk_label_new("P12: ");
+    gtk_grid_attach(GTK_GRID(grid), p_label_12,4,8,1,2);
+    p_entry_12 = gtk_entry_new();
+    gtk_grid_attach(GTK_GRID(grid), p_entry_12,5,8,1,2);
+    p_label_13= gtk_label_new("P13: ");
+    gtk_grid_attach(GTK_GRID(grid), p_label_13,6,2,1,2);
+    p_entry_13 = gtk_entry_new();
+    gtk_grid_attach(GTK_GRID(grid), p_entry_13,7,2,1,2);
+    p_label_14= gtk_label_new("P14: ");
+    gtk_grid_attach(GTK_GRID(grid), p_label_14,6,4,1,2);
+    p_entry_14 = gtk_entry_new();
+    gtk_grid_attach(GTK_GRID(grid), p_entry_14,7,4,1,2);
+    p_label_15= gtk_label_new("P15: ");
+    gtk_grid_attach(GTK_GRID(grid), p_label_15,6,6,1,2);
+    p_entry_15 = gtk_entry_new();
+    gtk_grid_attach(GTK_GRID(grid), p_entry_15,7,6,1,2);
+    p_label_16= gtk_label_new("P16: ");
+    gtk_grid_attach(GTK_GRID(grid), p_label_16,6,8,1,2);
+    p_entry_16 = gtk_entry_new();
+    gtk_grid_attach(GTK_GRID(grid), p_entry_16,7,8,1,2);
     
     p_label_indice = gtk_label_new("Indice de Parametrização");
     gtk_grid_attach(GTK_GRID(grid), p_label_indice,1,10,1,1);
@@ -522,6 +640,7 @@ void window_curva2D(){
     gtk_entry_set_text(GTK_ENTRY(p_entry_3),"200,200");
     gtk_entry_set_text(GTK_ENTRY(p_entry_4),"450,350");
     gtk_entry_set_text(GTK_ENTRY(p_entry_t),"0.1");
+    gtk_entry_set_text(GTK_ENTRY(p_entry_5),"");
     
     g_signal_connect(p_button,"clicked",G_CALLBACK(btn_draw_curva2D),p_window);
     g_signal_connect_swapped(p_button,"clicked",G_CALLBACK(gtk_widget_destroy),p_window);
